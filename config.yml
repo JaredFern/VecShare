@@ -1,0 +1,48 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: wordembedding/pyenv-tox
+
+    working_directory: /root/WordEmbeddingPlatform
+
+    environment:
+      PRERELEASE_BRANCH: prerelease
+      RELEASE_BRANCH: release
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - tox_cache-{{ checksum "tox.ini" }}
+
+      - run:
+          name: pyenv setup
+          command: |
+            pyenv local 2.7.13 3.4.5 3.5.2 3.6.0
+
+      - run:
+          name: tox
+          command: tox
+
+      - save_cache:
+          key: tox_cache-{{ checksum "tox.ini" }}
+          paths:
+            - .eggs
+            - .tox
+
+      - deploy:
+          name: Pre-release to pypi
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^(${PRERELEASE_BRANCH})$ ]]; then
+              echo 'Do a prerelease with twine here'
+            fi
+
+      - deploy:
+          name: Release to pypi
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^(${RELEASE_BRANCH})$ ]]; then
+              python setup.py sdist
+              twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD dist/*
+            fi
