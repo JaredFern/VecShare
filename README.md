@@ -1,4 +1,4 @@
-# VecShare: Framework for Sharig Word Embeddings
+# VecShare: Framework for Sharing Word Embeddings
 Library is in the process of being updated. See https://github.com/MarcusYYY/WordEmbeddingPlatform for a stable test version of the VecShare framework. A fully operational release will be publicly available prior to the EMNLP 2017 conference, by **September 7**.
 
 A Python library for word embedding query, selection and download. Read more about VecShare: <PAPER_URL>.
@@ -28,20 +28,39 @@ pip install vecshare
 See **Advanced Setup** for details on creating new indexers or signature methods.
 
 ### Check Available Embeddings
-The `check()` method displays embeddings available with the current indexer. The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Indexed embeddings are viewable at: `https://data.world/jaredfern/vecshare-indexer`.
+The `check()` method returns  embeddings available with the current indexer. The available embeddings are returned as a queryable `pandas.DataFrame`. The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Indexed embeddings are viewable at: `https://data.world/jaredfern/vecshare-indexer`.
 
 See **Advanced Setup**, if you would like to use a custom indexer.
 
 For example:
 ```python
->>>import vecshare
->>>vecshare.check()
-embedding_name                                        agriculture_40
-dimension                                                        100
-vocabulary size                                                19007
-url                https://query.data.world/s/ewf2464mqcr7tyiatbh...
-table                                                 agriculture_40
-file_format                                                      csv
+>>> import vecshare as vs
+vs.check()
+>>> vs.check()
+        embedding_name                              dataset_name contributor  \
+0            reutersr8         jaredfern/reuters-word-embeddings   jaredfern   
+1         reuters21578         jaredfern/reuters-word-embeddings   jaredfern   
+2                brown                    jaredfern/brown-corpus   jaredfern   
+3   glove_gigaword100d        jaredfern/gigaword-glove-embedding   jaredfern   
+4         oanc_written            jaredfern/oanc-word-embeddings   jaredfern   
+5          oanc_spoken            jaredfern/oanc-word-embeddings   jaredfern   
+6            text8_emb                    jaredfern/text-8-w-2-v   jaredfern   
+7              panglee         jaredfern/movie-review-embeddings   jaredfern   
+8            maas_imdb         jaredfern/movie-review-embeddings   jaredfern   
+9               20news          jaredfern/20-newsgroup-embedding   jaredfern   
+
+
+   case_sensitive  dimension embedding_type file_format vocab_size
+0           False        100       word2vec         csv       7821
+1           False        100       word2vec         csv      20203     
+2           False        100       word2vec         csv      15062     
+3           False        100          glove         csv     399922
+4           False        100       word2vec         csv      73127      
+5           False        100       word2vec         csv      11334   
+6           False         50       word2vec         csv      71290     
+7           False        100       word2vec         csv      14888      
+8           False        100       word2vec         csv      47954      
+9           False        100       word2vec         csv      34161     
 ```
 
 ### Embedding Query

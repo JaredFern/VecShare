@@ -1,20 +1,19 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-
 import urllib,urllib2,requests,sys,os,zipfile,string
 from scipy import spatial
 from gensim.models import Word2Vec
 from nltk.tokenize import sent_tokenize,word_tokenize
-from signatures import * 
+from signatures import *
 import indexer
 
 def check():
-	embedding_list = pd.read_csv(indexer.broker_url)
-	print 'Embeddings now avaliable.'
-	print embedding_list
-	return embedding_list
-
+	embedding_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE)
+	df = embedding_list.dataframe
+	cols  = df.columns.tolist()
+	title = ["embedding_name" , "dataset_name", "contributor"]
+	return df [title + [field for field in cols if field not in title]]
 
 # Report of the process of downloading large word embeddings.
 def report(count, blockSize, totalSize):
@@ -34,7 +33,7 @@ def query_embeddings(table,word):
 		return
 	if format_list[table_list == table].values[0] != 'csv':
 		print 'Sorry for the inconvenience but we are not able to query Non-csv file.'
-		return 
+		return
 	dataset_ = indexer.table_parser
 	query_ = 'SELECT * FROM ' + table + " where `Column A` = '" + word + "'"
 	try:
@@ -45,9 +44,9 @@ def query_embeddings(table,word):
 		ans.extend(num)
 		return ans
 	# Queries for a case insensitive word vector  match.
-	except: 
+	except:
 		pass
-	try: 
+	try:
 		print "No exact case-matching word vector found. Querying for a lowercase match."
 		query_ = 'SELECT * FROM ' + table + " where `Column A` = '" + word.lower() + "'"
 		results = dw.query(dataset_, query_)
@@ -56,9 +55,9 @@ def query_embeddings(table,word):
 		num = results.dataframe.values[0][1:]
 		ans.extend(num)
 		return ans
-	except: 
+	except:
 		pass
-	try: 
+	try:
 		print "No exact case-matching word vector found. Querying for a case-insensitive match."
 		query_ = 'SELECT * FROM ' + table + " where lower(`Column A`) = '" + word.lower() + "'"
 		results = dw.query(dataset_, query_)
@@ -73,7 +72,7 @@ def query_embeddings(table,word):
 
 # Get the subset of the pretrained embeddings according to the raw text input.
 def EmbedExtract(file_dir,table,batch = 200,pad = False,check = False,download = False):
-	
+
 	#Get the indexer of all available embeddings.
 	embedding_list = pd.read_csv(indexer.broker_url)
 	table_list = embedding_list['table']
@@ -187,13 +186,13 @@ def EmbedExtract(file_dir,table,batch = 200,pad = False,check = False,download =
 
 	print 'There are ' + missing_words + " tokens that can't be found in this pretrained word embedding."
 	print percent + "%" + " words can be found in this pretrained word embedding."
-	
+
 	if check:
 		print ans
 	return final_result
 
 
-class embedding: 
+class embedding:
 	# Initiate the embedding class and check if the embedding we want exists
 	def __init__(self,name=None,dimension=None):
 		# Load the whole list of current availiable embeddings
@@ -236,7 +235,7 @@ class embedding:
 		else:
 			print 'The embedding you are looking for does not exist.'
 			self.flag = False
-		
+
 		if self.flag:
 			try:
 				self.size = int(embedding_list[embedding_names == name]['vocabulary size'].values[0])
@@ -256,12 +255,12 @@ class embedding:
 			self.embed = None
 			self.table = embedding_list['table'][embedding_names == name]
 
-	# Download the embeddings in the broker file on data.world and save them 
+	# Download the embeddings in the broker file on data.world and save them
 	# on the local files.
 	def download(self,path = '_',file_format = 'csv'):
 		if len(file_format) > 5:
 			print "File format error. Please check it again."
-			return 
+			return
 		self.path = path
 		if self.flag:
 			url = self.url
