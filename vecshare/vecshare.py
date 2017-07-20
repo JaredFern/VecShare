@@ -23,19 +23,7 @@ def report(count, blockSize, totalSize):
 
 # SQL query for specific word embedding in given table
 def query(words, emb_name, set_name = None):
-	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe
-	emb_names = emb_list.embedding_name
-
-	if len(emb_list.loc[emb_list['embedding_name'] == emb_name]) > 1:
-		raise ValueError("More than one embedding exists with name: " + emb_name + "Try again specifying set_name.")
-	if emb_name not in emb_names.values:
-		raise ValueError("No embedding exists with name: " + emb_name)
-	if emb_list.file_format[emb_names == emb_name].iloc[0] not in ['csv', 'tsv', 'xls', 'rdf', 'json']:
-		raise TypeError(emb_name + " was not uploaded in a queryable format. Try reuploading as: csv, tsv, xls, rdf, or json.")
-
-	if not set_name:
-		set_name = emb_list.loc[emb_list['embedding_name'] == emb_name].dataset_name.iloc[0]
-
+	set_name = error_check(emb_name, set_name)
 	first_col = ['column_a', 'the']
 	for title in first_col:
 		try:
@@ -65,22 +53,10 @@ def query(words, emb_name, set_name = None):
 	raise RuntimeError("No matching word vector found.")
 
 # Get the subset of the pretrained embeddings according to the raw text input.
-def EmbedExtract(file_dir,table,batch = 200,pad = False,check = False,download = False):
+def extract(file_dir,emb_name, set_name= None,download = False):
+	set_name = error_check(emb_name, set_name)
 
-	#Get the indexer of all available embeddings.
-	embedding_list = pd.read_csv(indexer.broker_url)
-	table_list = embedding_list['table']
-	format_list = embedding_list['file_format']
-	name_list = embedding_list['embedding_name']
-
-	#Check whether the embedding user asked for exist or not.
-	if not name_list[table_list == table].values:
-		print "The embedding you asked to extract from doesn't exist."
-		return
-	if format_list[table_list == table].values[0] != 'csv':
-		print 'Sorry for the inconvenience but we are not able to query Non-csv file.'
-		return
-
+	# Generate test corpus size and vocab
 	texts = ''
 	for name in sorted(os.listdir(file_dir)):
 		path = os.path.join(file_dir, name)
@@ -100,87 +76,39 @@ def EmbedExtract(file_dir,table,batch = 200,pad = False,check = False,download =
 	inp_vocab = set(input_txt)
 	inp_vsize = (len(inp_vocab))
 
-	dataset_ = indexer.table_parser
-	query_ = ''
-	final_result = []
-	back_query = ''
 	print 'Embedding extraction begins.'
-	words = list(inp_vocab)
-	i = 0
-	back_up_i = 0
-
 	#Extraction is able to recover from Runtime error by adding restore mechanism.
-	while i < len(words):
-		if i == 0:
-			query_ = 'SELECT * FROM ' + table + " where `Column A` = '" + words[i] + "'"
-		elif i % batch == 0:
-			process = str((i)*100/len(words))
-			try:
-				results = dw.query(dataset_, query_)
-				print process + "%" + ' has been completed.'
-				back_query = query_
-				back_up_i = i
-			except RuntimeError,e:
-				i = back_up_i
-				print 'Batch size ' + str(batch)
-				batch = int(batch * 0.9)
-				if batch == 0:
-					print "404 Error"
-					break
-				print 'Batch size too large. Reducing to ' + str(batch)
-				continue
-			vector = results.dataframe.values
-			final_result.extend(vector)
-			query_ = 'SELECT * FROM ' + table + " where `Column A` = '" + words[i] + "'"
-		else:
-			query_ = query_ + " OR `Column A` = '" + words[i] + "'"
-		i = i + 1
+	query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(words))
+	results = dw.query(set_name, query).dataframe
+	results = results[results.columns[::-1]]
+	results = results.values.tolist()
+	if download:
+		with open(emb_name+"_extracted.csv", "w") as f:
+		    writer = csv.writer(f)
+		    writer.writerows(results)
+	return results
 
-	if batch == 0:
-		print "Embedding extraction failed."
-		return
+def download(emb_name, set_name):
+	set_name = error_check(emb_name, set_name)
+	query = "SELECT * FROM " + emb_name
+	results = dw.query(set_name, query).dataframe
+	results = results[results.columns[::-1]]
+	results = results.values.tolist()
+	with open(emb_name+".csv", "w") as f:
+		writer = csv.writer(f)
+		writer.writerows(results)
 
-	print 'Embedding successfully extracted.'
-	word_vector = {}
-	ans = ''
+def error_check(emb_name, set_name):
+	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe
+	emb_names = emb_list.embedding_name
 
-	for vector in final_result:
-		word = str(vector[0])
-		embed = np.array2string(vector[1:])[1:-1]
-		embed = embed.replace('\n','')
-		word_vector[word] = embed
-		ans = ans + word + ' ' + embed + '\n'
-	overlap_words = []
+	if len(emb_list.loc[emb_list['embedding_name'] == emb_name]) > 1 and set_name == None:
+		raise ValueError("More than one embedding exists with name: " + emb_name + "Try again specifying set_name.")
+	if emb_name not in emb_names.values:
+		raise ValueError("No embedding exists with name: " + emb_name)
+	if emb_list.file_format[emb_names == emb_name].iloc[0] not in ['csv', 'tsv', 'xls', 'rdf', 'json']:
+		raise TypeError(emb_name + " was not uploaded in a queryable format. Try reuploading as: csv, tsv, xls, rdf, or json.")
 
-	if pad == True:
-		for word in inp_vocab:
-			if not word_vector.has_key(word):
-				subset = []
-				subset.append(word.encode('utf-8'))
-				zero = np.zeros(final_result[0].shape[0]-1)
-				subset.extend(zero)
-				subset = np.asarray(subset,dtype=object)
-				final_result.append(subset)
-				embed = np.array2string(zero)[1:-1]
-				ans = ans + word + ' ' + embed + '\n'
-
-	if download == True:
-		f = open('Extracted_' + table + '.txt','w')
-		pool = ans.split('\n')
-		for line in pool:
-			f.write(line)
-			f.write('\n')
-		f.close()
-
-	for word in word_vector:
-		overlap_words.append(word)
-	int_count = int(len(set.intersection(set(overlap_words),set(words))))
-	missing_words = str(len(words) - int_count)
-	percent = str(int_count * 100 / len(words))
-
-	print 'There are ' + missing_words + " tokens that can't be found in this pretrained word embedding."
-	print percent + "%" + " words can be found in this pretrained word embedding."
-
-	if check:
-		print ans
-	return final_result
+	if not set_name:
+		set_name = emb_list.loc[emb_list['embedding_name'] == emb_name].dataset_name.iloc[0]
+	return set_name
