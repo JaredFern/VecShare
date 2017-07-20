@@ -6,7 +6,7 @@ A Python library for word embedding query, selection and download. Read more abo
 ## Prerequisites:
 Before installing this library, install the datadotworld Python library:
 ```
-pip install git+git://github.com/datadotworld/data.world-py.git
+pip install datadotworld
 ```
 
 Configure the datadotworld library with your data.world API token.
@@ -30,9 +30,11 @@ See **Advanced Setup** for details on creating new indexers or signature methods
 ### Available Embeddings
 The `check()` method returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
-The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `data.world/jaredfern/vecshare-indexer`. See **Advanced Setup**, if you would like to use a custom indexer.
+The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `data.world/jaredfern/vecshare-indexer`.
 
-For example:
+See **Advanced Setup**, if you would like to use a custom indexer.
+
+**For example:**
 ```python
 >>> import vecshare as vs
 >>> vs.check()
@@ -65,7 +67,7 @@ For example:
 ### Embedding Query
 The `query(table, request)` method returns word vectors for the words in array `request` from shared embedding `table`.
 
-For example:
+**For example:**
 ```python
 >>>print vecshare.query('agriculture_40',['the'])
 ['the', -1.004704, 0.037287, -0.016309, -0.088428, -1.1478, 0.331032, -0.77213, -0.07757, -0.874058, -1.170626, -0.253766, 1.137803, 1.045363,
@@ -78,7 +80,7 @@ New embeddings can be added to the framework by uploading the embedding as a .cs
 
 Metadata associated with the embedding can be added in the datasets description in the following format, `Field: Value`
 
-For Example:
+**For example:**
 ```
 Embedding Type: word2vec
 Token Count: 6000000
@@ -94,14 +96,14 @@ Parameters:
 * **padding (bool, Optional):** If padding flag is set to True, word vectors with value-zero will be added for words in the target corpus but not in the embedding
 
 
-For example:
+**For example:**
 ```
 >>> vecshare.extract(file_dir ='Test_Input/reutersR8_all' ,table ='agriculture_40',pad = True,check = True,download = True)
 ```
 
 ### Embedding Download
 
-For example:
+**For example:**
 ```
 >>> A = ep.embedding('agriculture_40',100)
 The embedding you are looking for exists. The url is https://query.data.world/s/enfkzx0yrnxevzcy9m7fm81hi
@@ -121,7 +123,7 @@ We are assuming that word embeddings with similar high frequency words are built
 
 `inp_dir` is the path of input corpora.`num_sig` means the number of words chosen as signature of the input corpora. `num_sig_embedding` indicates the number of words picked as signature of the pretrained embedding. And`num_stopwords` is the number of stopwords we ignore in this method.
 
-For example:
+**For example:**
 ```python
 >>>INPUT_DIR = 'Test_Input/reutersR8_all'
 >>>ep.method_a(inp_dir = INPUT_DIR,num_sig = 5000,num_sig_embedding = 5000,num_stopwords = 100)

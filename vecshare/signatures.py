@@ -9,10 +9,10 @@ from gensim.models import Word2Vec
 from nltk.tokenize import sent_tokenize,word_tokenize
 from collections import Counter
 from operator import itemgetter
-import info
+import indexer
 
 hdv_vocab = []
-# AvgRank Signature Similarity Method 
+# AvgRank Signature Similarity Method
 def method_a(inp_dir,num_sig,num_sig_embedding,num_stopwords):
 	rank_dict = dict()
 	signature,hf_vocab = HighDensityVocab(num = num_sig_embedding,num_stopwords = num_stopwords)
@@ -42,7 +42,7 @@ def HighDensityVocab(tolerance = 0.85,num = 5000,num_stopwords = 200):
 	name_list = embedding_list['embedding_name']
 	format_list = embedding_list['file_format']
 	files = []
-	threshold = int(0.5 + tolerance * len(url_list))	
+	threshold = int(0.5 + tolerance * len(url_list))
 	emb_vocab = {}
 
 	#fetch the embedding from data.world and output the high density vocab for each existing embedding
@@ -70,7 +70,7 @@ def HighDensityVocab(tolerance = 0.85,num = 5000,num_stopwords = 200):
 	hdv_vocab.extend(punctuation)
 
 	print "Assembled High Density Vocabulary found in at least ",tolerance *100, " percent of embeddings."
-	
+
 	#Create a dictionary of which keys are embedding names and values are lists of high freq words(signature)
 	signature = {}
 	for index,file in enumerate(files):
@@ -99,7 +99,7 @@ def RankVocabGenerator(inp_dir,num = 5000):
 						decoded_txt = f.read()
 						tok_txt = word_tokenize(decoded_txt.lower())
 						for word in tok_txt:
-							cnt[word] += 1					
+							cnt[word] += 1
 				except Exception,e:
 					continue
 		print "Pick top " + str(num) + " most frequently occurring words in the corpus as signature. "

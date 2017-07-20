@@ -29,7 +29,6 @@ def refresh_indexer():
     dw_api = dw.api_client()
     wd.close()
 
-
     with open(INDEX_FILE+".csv", 'w') as ind:
         # CUSTOM INDEXERS: Add additional metadata fields to header file
         header = [
@@ -39,7 +38,7 @@ def refresh_indexer():
             "Embedding Type",
             "Dimension",
             "Vocab Size",
-            "Token Count",
+            # v"Token Count",
             "Case Sensitive",
             "File Format"
         ]
@@ -50,7 +49,6 @@ def refresh_indexer():
             curr_set  = dw.load_dataset(s,force_update = True) # Embedding
             curr_meta = dw_api.get_dataset(s)
             contrib   = curr_meta["owner"]
-
             meta_dict = dict()
             for field in curr_meta["summary"].split(","):
                 meta_field = field.split(":")
