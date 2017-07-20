@@ -27,15 +27,14 @@ pip install vecshare
 
 See **Advanced Setup** for details on creating new indexers or signature methods.
 
-### Check Available Embeddings
-The `check()` method returns  embeddings available with the current indexer. The available embeddings are returned as a queryable `pandas.DataFrame`. The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Indexed embeddings are viewable at: `https://data.world/jaredfern/vecshare-indexer`.
+### Available Embeddings
+The `check()` method returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
-See **Advanced Setup**, if you would like to use a custom indexer.
+The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `data.world/jaredfern/vecshare-indexer`. See **Advanced Setup**, if you would like to use a custom indexer.
 
 For example:
 ```python
 >>> import vecshare as vs
-vs.check()
 >>> vs.check()
         embedding_name                              dataset_name contributor  \
 0            reutersr8         jaredfern/reuters-word-embeddings   jaredfern   
