@@ -1,12 +1,11 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import urllib,urllib2,requests,sys,os,zipfile,string, indexer
+import urllib,urllib2,requests,sys,os,zipfile,string, indexer, time, progressbar,csv
 from scipy import spatial
 from gensim.models import Word2Vec
 from nltk.tokenize import sent_tokenize,word_tokenize
 from signatures import *
-from embedding import embedding
 
 def check():
 	embedding_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE)
@@ -15,88 +14,117 @@ def check():
 	title = ["embedding_name" , "dataset_name", "contributor"]
 	return df [title + [field for field in cols if field not in title]]
 
-# Report of the process of downloading large word embeddings.
-def report(count, blockSize, totalSize):
-	percent = float(count*blockSize*100/totalSize)
-	sys.stdout.write("\r%d%%" % percent + ' complete')
-	sys.stdout.flush()
-
 # SQL query for specific word embedding in given table
-def query(words, emb_name, set_name = None):
+def query(words, emb_name, set_name = None, case_sensitive = False):
 	set_name = error_check(emb_name, set_name)
-	first_col = ['column_a', 'the']
+	if case_sensitive: first_col = ['column_a', 'the']
+	else:
+		words = [word.lower() for word in words]
+		first_col = ['lower(column_a)', 'lower(the)']
+
 	for title in first_col:
 		try:
 			if len(words)>1:
 				query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(words))
 			else:
-				query = 'SELECT * FROM ' + emb_name + ' where ' + title + 'column_a =' + words[0]
+				query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' = "' + words[0] + '"'
 			results = dw.query(set_name, query).dataframe
 			results = results[results.columns[::-1]]
-			if len(results) < len(words): continue
 			return results.values.tolist()
 		except: pass
 
-	words = [word.lower() for word in words]
-	first_col = ['lower(column_a)', 'lower(the)']
-	print ("No case sensitive match found. Searching for non-case sensitive match.")
-	for title in first_col:
-		try:
-			if len(words)>1:
-				query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(words))
-			else:
-				query = 'SELECT * FROM ' + emb_name + ' where ' + title + 'column_a =' + words[0]
-			results = dw.query(set_name, query).dataframe
-			results = results[results.columns[::-1]]
-			return results.values.tolist()
-		except: pass
 	raise RuntimeError("No matching word vector found.")
 
 # Get the subset of the pretrained embeddings according to the raw text input.
-def extract(file_dir,emb_name, set_name= None,download = False):
+def extract(emb_name, file_dir='Test_Input/reutersR8_all', set_name= None,download = True):
 	set_name = error_check(emb_name, set_name)
-
-	# Generate test corpus size and vocab
 	texts = ''
 	for name in sorted(os.listdir(file_dir)):
 		path = os.path.join(file_dir, name)
 		if os.path.isdir(path):
 			for fname in sorted(os.listdir(path)):
 				fpath = os.path.join(path, fname)
-				if sys.version_indexer < (3,):
-					f = open(fpath)
-				else:
-					f = open(fpath, encoding='latin-1')
+				if sys.version_info < (3,): f = open(fpath)
+				else: f = open(fpath, encoding='latin-1')
 				texts = texts + f.read()
 	input_txt = []
 	sentences = sent_tokenize(texts)
 	for s in sentences:
 		tokens = word_tokenize(s)
 		input_txt = input_txt + tokens
-	inp_vocab = set(input_txt)
+
+	inp_vocab = list(set(input_txt))
 	inp_vsize = (len(inp_vocab))
 
+	query, extract_emb = '', []
 	print 'Embedding extraction begins.'
-	#Extraction is able to recover from Runtime error by adding restore mechanism.
-	query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(words))
-	results = dw.query(set_name, query).dataframe
-	results = results[results.columns[::-1]]
-	results = results.values.tolist()
-	if download:
-		with open(emb_name+"_extracted.csv", "w") as f:
-		    writer = csv.writer(f)
-		    writer.writerows(results)
-	return results
+	i,loss,title = 0,0,''
 
-def download(emb_name, set_name):
-	set_name = error_check(emb_name, set_name)
-	query = "SELECT * FROM " + emb_name
-	results = dw.query(set_name, query).dataframe
-	results = results[results.columns[::-1]]
-	results = results.values.tolist()
-	with open(emb_name+".csv", "w") as f:
-		writer = csv.writer(f)
-		writer.writerows(results)
+	#Extraction is able to recover from Runtime error by adding restore mechanism.
+	with progressbar.ProgressBar(max_value=inp_vsize) as bar:
+		while i < 400:
+			if title != 'column_a':
+				try:
+					title = 'the'
+					query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+					word_vecs = dw.query(set_name, query).dataframe
+				except:
+					title ='column_a'
+					query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+					word_vecs = dw.query(set_name, query).dataframe
+			else:
+				title ='column_a'
+				query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+				word_vecs = dw.query(set_name, query).dataframe
+
+			word_vecs = word_vecs[word_vecs.columns[::-1]].values.tolist()
+			loss   += 400 - len(word_vecs)
+			extract_emb.extend(word_vecs)
+			bar.update(i)
+			i += 400
+
+	print 'Embedding successfully extracted.'
+
+	if download == True:
+		with open(emb_name+'_extracted.csv', 'w') as extract_csv:
+			writer = csv.writer(extract_csv)
+			writer.writerows(extract_emb)
+
+	print 'There are ' + str(loss) + " tokens that are in this pretrained word embedding."
+	print str(loss/inp_vsize) + "%" + " of words in target corpus are in this pretrained word embedding."
+	return extract_emb
+
+# def download(emb_name, set_name=None):
+# 	set_name = error_check(emb_name, set_name)
+# 	vocab_size = dw.query(indexer.INDEXER_URL, 'SELECT vocab_size FROM ' + indexer.INDEX_FILE + ' WHERE embedding_name = "' + emb_name + '"').dataframe.iloc[0].values[0]
+# 	title,i = '',0
+# 	with progressbar.ProgressBar(max_value=vocab_size) as bar:
+# 		while i < vocab_size:
+# 			if title != 'column_a':
+# 				try:
+# 					title = 'the'
+# 					query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+# 					word_vecs = dw.query(set_name, query).dataframe
+# 				except:
+# 					title ='column_a'
+# 					query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+# 					word_vecs = dw.query(set_name, query).dataframe
+# 			else:
+# 				title ='column_a'
+# 				query = 'SELECT * FROM ' + emb_name + ' where ' + title + ' in' + str(tuple(inp_vocab[i:i+400]))
+# 				word_vecs = dw.query(set_name, query).dataframe
+#
+# 			word_vecs = word_vecs[word_vecs.columns[::-1]].values.tolist()
+# 			loss   += 400 - len(word_vecs)
+# 			download_emb.extend(word_vecs)
+# 			bar.update(i)
+# 			i += 400
+#
+# 	if download == True:
+# 		with open(emb_name+'.csv', 'w') as download_csv:
+# 			writer = csv.writer(download_csv)
+# 			writer.writerows(download_emb)
+# 	return download_emb
 
 def error_check(emb_name, set_name):
 	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe
