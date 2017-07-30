@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import datadotworld as dw
-import csv, os, sys
+import csv, os
 
 INDEXER      = 'jaredfern/vecshare-indexer'
 INDEX_FILE   = 'index_file'
@@ -15,7 +15,25 @@ INDEXER_URL  = BASE_URL + INDEXER  # URL for index & signature file
 DATASETS_URL = 'https://data.world/datasets/' + EMB_TAG           # URL for uploaded embeddings
 DW_CLASS_TAG = 'dw-dataset-name DatasetCard__name___2U4-H'
 
+def new_embsets():
+    # Retrieve source for data.world:vecshare search results
+    wd = webdriver.Chrome()
+    wd.get(DATASETS_URL)
+    try:
+        WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, DW_CLASS_TAG)))
+    except: pass
+
+    # Scrape source for dataset links
+    soup = BeautifulSoup(wd.page_source, 'lxml')
+    sets    = [s["href"][1:] for s in soup.find_all('a', DW_CLASS_TAG)]
+    dw_api = dw.api_client()
+    wd.close()    
+
+
 def refresh_indexer():
+    '''
+
+    '''
     # Retrieve source for data.world:vecshare search results
     wd = webdriver.Chrome()
     wd.get(DATASETS_URL)
@@ -39,7 +57,8 @@ def refresh_indexer():
             "Dimension",
             "Vocab Size",
             "Case Sensitive",
-            "File Format"
+            "File Format",
+            "Download URL"
         ]
 
         csv_writer = csv.DictWriter(ind, fieldnames = header)

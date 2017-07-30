@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np
 import datadotworld as dw
 import sys,os,progressbar,csv,indexer,signatures,pdb
+from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from multiprocessing import Pool
+
 
 def _error_check(emb_name, set_name):
 	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe
@@ -42,9 +44,8 @@ def format(emb_path):
 	"""
 	data, row_count = "", 0
 	with open (emb_path, 'r') as emb:
-		row= emb.readline()
-		row_count = row.count(',')
-
+		csv_reader = csv.reader(emb)
+		row_count = len(csv_reader.next())
 		emb.seek(0)
 		data = emb.read()
 	with open (emb_path, 'w') as emb:
@@ -92,7 +93,7 @@ def extract(emb_name, file_dir, set_name = None, download = True):
 		Pandas DataFrame containing queried word vectors
 	"""
 	set_name = _error_check(emb_name, set_name)
-	input_vocab = set()
+	inp_vocab = set()
 
 	for name in sorted(os.listdir(file_dir)):
 		path = os.path.join(file_dir, name)
@@ -104,22 +105,25 @@ def extract(emb_name, file_dir, set_name = None, download = True):
 
 				sentences = sent_tokenize(f.read())
 				for s in sentences:
-					input_vocab.update(word_tokenize(s))
-
+					inp_vocab.update(word_tokenize(s))
+	inp_vocab = list(inp_vocab)
 	inp_vsize = len(inp_vocab)
 	print ('Embedding extraction begins.')
 	query, extract_emb = '', pd.DataFrame()
-	i,loss, proc_cnt, query_size = 0,0,16,400
+	i,loss, proc_cnt, query_size = 0,0,4,400
+# 16 Workers: 64s, 8 Workers: 65s, 1 Worker: +2 mins, 4 Workers:
 
 	with progressbar.ProgressBar(max_value=inp_vsize) as bar:
 		p = Pool(proc_cnt)
 		while i < inp_vsize:
 			query = ['SELECT * FROM ' + emb_name + ' where text in' + \
 				str(tuple(inp_vocab[i + query_size*j :i + query_size*(j+1)])) for j in range(0,proc_cnt)]
-			word_vecs = p.map(dw.query(set_name).dataframe, query)
-			word_vecs = [ent for sublist in word_vecs for ent in sublist]
-			word_vecs = word_vecs[word_vecs.columns[::-1]]
-			extract_emb.append(word_vecs)
+			partial_map = partial(dw.query, set_name)
+			word_vecs = p.map(partial_map, query)
+			word_vecs = [vec.dataframe for vec in word_vecs]
+
+			for each in word_vecs:
+				extract_emb = extract_emb.append(each[each.columns[::-1]])
 
 			loss += query_size * proc_cnt - len(word_vecs)
 			bar.update(i)
