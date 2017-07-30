@@ -9,7 +9,7 @@ from gensim.models import Word2Vec
 from nltk.tokenize import sent_tokenize,word_tokenize
 from collections import Counter
 from operator import itemgetter
-import info
+import indexer
 
 hdv_vocab = []
 # AvgRank Signature Similarity Method

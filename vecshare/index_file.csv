@@ -1,18 +1,18 @@
-Embedding Name,Dataset Name,Contributor,Embedding Type,Dimension,Vocab Size,Token Count,Case Sensitive,File Format
-reutersr8,jaredfern/reuters-word-embeddings,jaredfern,word2vec,100,7821,,False,csv
-reuters21578,jaredfern/reuters-word-embeddings,jaredfern,word2vec,100,20203,,False,csv
-20news,jaredfern/20-newsgroup-embedding,jaredfern,word2vec,100,34161,,False,csv
-econ_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,18845,,False,csv
-govt_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19927,,False,csv
-weather_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19442,,False,csv
-arts_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,17322,,False,csv
-agriculture_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19006,,False,csv
-books_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,17505,,False,csv
-movies_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,18108,,False,csv
-brown,jaredfern/brown-corpus,jaredfern,word2vec,100,15062,,False,csv
-glove_gigaword100d,jaredfern/gigaword-glove-embedding,jaredfern,glove,100,399922,,False,csv
-oanc_written,jaredfern/oanc-word-embeddings,jaredfern,word2vec,100,73127,,False,csv
-oanc_spoken,jaredfern/oanc-word-embeddings,jaredfern,word2vec,100,11334,,False,csv
-text8_emb,jaredfern/text-8-w-2-v,jaredfern,word2vec,50,71290,,False,csv
-panglee,jaredfern/movie-review-embeddings,jaredfern,word2vec,100,14888,,False,csv
-maas_imdb,jaredfern/movie-review-embeddings,jaredfern,word2vec,100,47954,,False,csv
+Embedding Name,Dataset Name,Contributor,Embedding Type,Dimension,Vocab Size,Case Sensitive,File Format
+reutersr8,jaredfern/reuters-word-embeddings,jaredfern,word2vec,100,7821,False,csv
+reuters21578,jaredfern/reuters-word-embeddings,jaredfern,word2vec,100,20203,False,csv
+20news,jaredfern/20-newsgroup-embedding,jaredfern,word2vec,100,34161,False,csv
+econ_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,18845,False,csv
+govt_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19927,False,csv
+weather_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19442,False,csv
+arts_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,17322,False,csv
+agriculture_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,19006,False,csv
+books_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,17505,False,csv
+movies_40,jaredfern/new-york-times-word-embeddings,jaredfern,word2vec,100,18108,False,csv
+oanc_written,jaredfern/oanc-word-embeddings,jaredfern,word2vec,100,73127,False,csv
+oanc_spoken,jaredfern/oanc-word-embeddings,jaredfern,word2vec,100,11334,False,csv
+glove_gigaword100d,jaredfern/gigaword-glove-embedding,jaredfern,glove,100,399922,False,csv
+brown,jaredfern/brown-corpus,jaredfern,word2vec,100,15062,False,csv
+panglee,jaredfern/movie-review-embeddings,jaredfern,word2vec,100,14888,False,csv
+maas_imdb,jaredfern/movie-review-embeddings,jaredfern,word2vec,100,47954,False,csv
+text8_emb,jaredfern/text-8-w-2-v,jaredfern,word2vec,50,71290,False,csv

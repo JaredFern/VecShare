@@ -93,28 +93,14 @@ The `extract(file_path, table, download=False)` method return vectors for the wo
 Parameters:
 * **corp_path (str):**  Absolute path to the directory containing the target corpus
 * **table (str):**      Name of the embedding on the framework to be downloaded
-* **padding (bool, Optional):** If padding flag is set to True, word vectors with value-zero will be added for words in the target corpus but not in the embedding
 
 
 **For example:**
 ```
->>> vecshare.extract(file_dir ='Test_Input/reutersR8_all' ,table ='agriculture_40',pad = True,check = True,download = True)
+>>> vecshare.extract(file_dir ='Test_Input/reutersR8_all' ,table ='agriculture_40',download = True)
 ```
 
-### Embedding Download
 
-**For example:**
-```
->>> A = ep.embedding('agriculture_40',100)
-The embedding you are looking for exists. The url is https://query.data.world/s/enfkzx0yrnxevzcy9m7fm81hi
->>> print A.name
-agriculture_40
->>> print A.dimension
-100
->>>A.download(path = 'Embedding/')
-The embedding path is /Users/Embedding_platform/Embedding/agriculture_40.csv .
-Word embedding has been successfully downloaded.
-Check the vector attribute by using embedding_name.vector
 ```
 ### Embedding Selection
 The `AvgRank(inp_dir,num_sig,num_sig_embedding,num_stopwords)` embedding selection method that selects the embedding with highest similarity
@@ -123,9 +109,7 @@ We are assuming that word embeddings with similar high frequency words are built
 
 `inp_dir` is the path of input corpora.`num_sig` means the number of words chosen as signature of the input corpora. `num_sig_embedding` indicates the number of words picked as signature of the pretrained embedding. And`num_stopwords` is the number of stopwords we ignore in this method.
 
-**For example:**
-```python
->>>INPUT_DIR = 'Test_Input/reutersR8_all'
+**For example:
 >>>ep.method_a(inp_dir = INPUT_DIR,num_sig = 5000,num_sig_embedding = 5000,num_stopwords = 100)
 100 most frequent words will be removed as stop words.
 Pick up 5000 top frequent words as signature of all avaliable embeddings.

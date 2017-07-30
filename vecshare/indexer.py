@@ -38,7 +38,6 @@ def refresh_indexer():
             "Embedding Type",
             "Dimension",
             "Vocab Size",
-            # v"Token Count",
             "Case Sensitive",
             "File Format"
         ]
@@ -71,4 +70,4 @@ def refresh_indexer():
                 csv_writer.writerow(meta_dict)
 
     print "Updating index file at " + INDEXER_URL
-    dw_api.upload_files(INDEXER, os.getcwd() + INDEX_FILE)
+    dw_api.upload_files(INDEXER, os.getcwd() + '/'+ INDEX_FILE +'.csv')
