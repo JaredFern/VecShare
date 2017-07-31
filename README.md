@@ -1,7 +1,7 @@
 # VecShare: Framework for Sharing Word Embeddings
 Library is in the process of being updated. See https://github.com/MarcusYYY/WordEmbeddingPlatform for a stable test version of the VecShare framework. A fully operational release will be publicly available prior to the EMNLP 2017 conference, by **September 7**.
 
-A Python library for word embedding query, selection and download. Read more about VecShare: <PAPER_URL>.
+A Python library for word embedding query, selection and download. Read more about VecShare: bit.ly/VecShare.
 
 ## Prerequisites:
 Before installing this library, install the datadotworld Python library:
@@ -27,14 +27,14 @@ pip install vecshare
 
 See **Advanced Setup** for details on creating new indexers or signature methods.
 
-### Available Embeddings
-The `check()` method returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
+### Check Available Embeddings
+**`check()`:**  Returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
 The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `data.world/jaredfern/vecshare-indexer`.
 
 See **Advanced Setup**, if you would like to use a custom indexer.
 
-**For example:**
+** Example:**
 ```python
 >>> import vecshare as vs
 >>> vs.check()
@@ -44,11 +44,6 @@ See **Advanced Setup**, if you would like to use a custom indexer.
 2                brown                    jaredfern/brown-corpus   jaredfern   
 3   glove_gigaword100d        jaredfern/gigaword-glove-embedding   jaredfern   
 4         oanc_written            jaredfern/oanc-word-embeddings   jaredfern   
-5          oanc_spoken            jaredfern/oanc-word-embeddings   jaredfern   
-6            text8_emb                    jaredfern/text-8-w-2-v   jaredfern   
-7              panglee         jaredfern/movie-review-embeddings   jaredfern   
-8            maas_imdb         jaredfern/movie-review-embeddings   jaredfern   
-9               20news          jaredfern/20-newsgroup-embedding   jaredfern   
 
 
    case_sensitive  dimension embedding_type file_format vocab_size
@@ -56,27 +51,29 @@ See **Advanced Setup**, if you would like to use a custom indexer.
 1           False        100       word2vec         csv      20203     
 2           False        100       word2vec         csv      15062     
 3           False        100          glove         csv     399922
-4           False        100       word2vec         csv      73127      
-5           False        100       word2vec         csv      11334   
-6           False         50       word2vec         csv      71290     
-7           False        100       word2vec         csv      14888      
-8           False        100       word2vec         csv      47954      
-9           False        100       word2vec         csv      34161     
+4           False        100       word2vec         csv      73127        
 ```
 
-### Embedding Query
-The `query(table, request)` method returns word vectors for the words in array `request` from shared embedding `table`.
+### Embedding Upload or Update
+Embeddings must be uploaded as a .csv file with a header in the format: ['text', 'd0', 'd1', ... 'd_n'], such that they can be properly indexed and accessed.
 
-**For example:**
-```python
->>>print vecshare.query('agriculture_40',['the'])
-['the', -1.004704, 0.037287, -0.016309, -0.088428, -1.1478, 0.331032, -0.77213, -0.07757, -0.874058, -1.170626, -0.253766, 1.137803, 1.045363,
- 2.386086, 0.229137, 0.272712, -0.334886, -1.015797, 0.662011, -0.472902, -0.333736, 1.604692, 0.924259, 0.707687, -0.153192, 1.007494, 1.09558,
--1.159106, 0.88615, 1.214197, -1.345269, -2.309988, 0.581767, -2.040186, 0.019013, -0.090971, -0.690396, 1.578381, -0.441838, 0.968358, 0.865741,
--1.263163, -0.829032, -0.313665, 0.138191]
-```
-### Embedding Upload
-New embeddings can be added to the framework by uploading the embedding as a .csv file to data.world, and tagging the dataset with the vecshare tag. The default indexer will add new embedding sets weekly.
+**`format(emb_path)`:** Reformats existing embeddings in the .csv format with a header in the correct format for tabular access.
+  * **emb_path (str):** Path to the embedding being formatted
+
+
+**`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
+  * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
+  * **emb_path (str):** Path to embedding being uploaded
+  * **metadata (dict, opt):** Dictionary containing metadata fields and values '{metadata_field: value}'
+  * **summary (str, opt):** Optional embedding description
+
+**`update(set_name, emb_path = "", metadata = {}, summary = "")`:** Update an existing shared embedding or its associated metadata
+  * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
+  * **emb_path (str):** Path to embedding being uploaded
+  * **metadata (dict, opt):** Dictionary containing metadata fields and values '{metadata_field: value}'
+  * **summary (str, opt):** Optional embedding description
+
+Alternatively, new embeddings can be added to the framework by uploading the embedding as a .csv file to data.world, and tagging the dataset with the <vecshare> tag. The default indexer will add new embedding sets weekly.
 
 Metadata associated with the embedding can be added in the datasets description in the following format, `Field: Value`
 
@@ -87,51 +84,63 @@ Token Count: 6000000
 Case Sensitive: False
 ```
 
+### Embedding Query
+**`query(words, emb_name, set_name = None, case_sensitive = False)`:**  Returns a  pandas DataFrame, such that each row specifies a word vector from the query.
+  * **words (list):** List of word vectors being requested
+  * **emb_name (str):** Title of the embedding containing the requested word vectors
+  * **set_name (str, opt):** Specify only if multiple embeddings exist with the same emb_name
+  * **case_sensitive (bool):** Set to True if word vectors must exactly case match those in words
+
+** Example:**
+```python
+>>>>>> vs.query(['The', 'farm'], 'agriculture_40')
+   text       d99       d98       d97       d96       d95   ...           d1      d0  
+0   the -1.414755  0.414973  1.115698  0.034085  0.542921   ...   0.037287 -1.004704  
+1  farm  0.349535 -0.379208 -0.189476  2.776809 -0.099886   ...   0.067443 -1.391604  
+[2 rows x 101 columns]
+```
 ### Embedding Extraction
-The `extract(file_path, table, download=False)` method return vectors for the words in the shared embedding `table` that overlap with the user's corpus at `corp_path`.
+**`def extract(emb_name, file_dir, set_name = None, download = False):`** Return a pandas DataFrame containing all available word vectors for the target corpora's vocabulary.
 
 Parameters:
-* **corp_path (str):**  Absolute path to the directory containing the target corpus
-* **table (str):**      Name of the embedding on the framework to be downloaded
-
+  * **emb_name (str):** Title of the shared embedding
+  * **file_dir (str):** Directory containing the user's target corpora
+  * **set_name (str,opt):** Specify only if multiple embeddings exist with the same emb_name
+  * **download (bool,opt):** If True, the extracted embedding will be saved as a .csv
+  * **case_sensitive (bool):** Set to True if word vectors must exactly case match those in words
 
 **For example:**
 ```
->>> vecshare.extract(file_dir ='Test_Input/reutersR8_all' ,table ='agriculture_40',download = True)
+vs.extract('agriculture_40', 'Test_Input/reutersR8_all')
+Embedding extraction begins.
+100% (23584 of 23584) |#######################################################################| Elapsed Time: 0:01:04 Time: 0:01:04
+Embedding successfully extracted.
+
+              text       d99       d98       d97       d96       d95    ... \
+0        designing -0.194328 -0.229856  0.455848  0.234053 -0.272354    ...
+1       affiliated -0.446879 -0.519360  0.130626  0.034608  0.134680    ...
+2    appropriately  0.106778  0.057186 -0.222296  0.101948  0.395122    ...
+3       cincinnati -0.563716 -0.274534  0.120897  0.273457  0.383307    ...
+4           choice  0.689276  1.586349  1.301351 -1.193058 -0.243053    ...
+5              han -0.287583  0.237989 -0.141203  0.328414  0.401448    ...
+6            begin  1.952841 -1.497073 -0.656650  2.443687  0.315941    ...
+7        wednesday -1.591453 -1.419733 -0.758305  2.638620  0.323779    ...
+8            wales -0.591623 -0.761353 -0.042557 -0.106776  0.004614    ...
+9             much  1.971340 -2.316020  0.147194 -0.641963 -0.280868    ...
+
+            d14       d13       d12       d11       d10        d1         d0
+0      0.432226 -0.023887 -0.246207  0.429862  0.268280  0.283950   0.218664   
+1      0.702217 -0.516346  0.273179  0.662874  0.106199 -0.011592   0.057832   
+2     -0.174151 -0.069734 -0.255887  0.070181 -0.163013  0.093490   0.028913
+3     -0.189739 -0.089899 -0.048192  0.569139  0.595834  0.421905  -0.241777
+4     -1.085993 -0.054178  1.156616 -1.449286  0.267787  0.677337   2.148856  
+5     -0.004664 -0.414933 -0.346377 -0.214976  0.201621  0.063539  -0.331673
+6      1.587940 -0.258819  1.396479  0.637493 -1.476619 -0.487518   0.864765    
+7      0.190376  0.881103  0.966915  1.543105  1.974099 -0.807656   0.800163  
+8     -0.181255  0.005893 -0.718905  0.373082  0.784821  0.393715  -0.000517  
+9      1.348299  0.180225  1.686486  0.535154 -2.005099 -1.424234  -2.677770    
+[9320 rows x 101 columns]
 ```
-
-
-```
-### Embedding Selection
-The `AvgRank(inp_dir,num_sig,num_sig_embedding,num_stopwords)` embedding selection method that selects the embedding with highest similarity
-
-We are assuming that word embeddings with similar high frequency words are built from similar topics corpor. The score this method computed is negatively correlated with the performance of those pretrained word emebddings.Therefore the emebdding with the least score outperforms the others.
-
-`inp_dir` is the path of input corpora.`num_sig` means the number of words chosen as signature of the input corpora. `num_sig_embedding` indicates the number of words picked as signature of the pretrained embedding. And`num_stopwords` is the number of stopwords we ignore in this method.
-
-**For example:
->>>ep.method_a(inp_dir = INPUT_DIR,num_sig = 5000,num_sig_embedding = 5000,num_stopwords = 100)
-100 most frequent words will be removed as stop words.
-Pick up 5000 top frequent words as signature of all avaliable embeddings.
-Fetching agriculture_40 embeddings and creating its signature.
-Fetching art_40 embeddings and creating its signature.
-Fetching books_40 embeddings and creating its signature.
-Fetching econ_40 embeddings and creating its signature.
-Fetching govt_40 embeddings and creating its signature.
-Fetching movies_40 embeddings and creating its signature.
-Fetching weather_40 embeddings and creating its signature.
-Processing High Density Vocabulary list.
-Assembled High Density Vocabulary found in at least  85.0  percent of embeddings.
-Pick top 5000 most frequently occurring words in the corpus as signature.
-[('movies_40', 2892.3935935935065),
- ('books_40', 2915.7785785784804),
- ('art_40', 3016.7237237236086),
- ('agriculture_40', 3236.933733733591),
- ('govt_40', 3243.128928928771),
- ('weather_40', 3267.9365365363774),
- ('econ_40', 3275.4096096094536)]
- The best pretrained embedding is movies_40.
- ```
 
 ## Advanced Setup
 ### Custom Signature Methods:

@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,os,progressbar,csv,indexer,signatures,pdb
+import sys,os,progressbar,csv,indexer,signatures, pdb
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from multiprocessing import Pool
-
 
 def _error_check(emb_name, set_name):
 	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe
@@ -57,9 +56,9 @@ def query(words, emb_name, set_name = None, case_sensitive = False):
 	"""Query a set of word vectors from an indexed embedding.
 	Args:
 		words (List of strings): The set of word vectors being queried
-		emb_name (string): The embedding from which word vectors are being queried
-		set_name (optional, string): If multiple embeddings exist with the same name, specify the datset.
-		case_sensitive (bool): Specify whether word vectors must have exact case match to query
+		emb_name (str): The embedding from which word vectors are being queried
+		set_name (str, opt): Name of dataset being queried (format: owner/id)
+		case_sensitive (bool, opt): Flag for matching exact case in query
 
 	Returns:
 		Pandas Dataframe, each row specifying a word vector.
@@ -81,7 +80,7 @@ def query(words, emb_name, set_name = None, case_sensitive = False):
 			raise RuntimeError("Embedding is formatted improperly. Check headers at: " + query)
 	raise RuntimeError("No matching word vector found.")
 
-def extract(emb_name, file_dir, set_name = None, download = True):
+def extract(emb_name, file_dir, set_name = None, case_sensitive = False, download = False):
 	"""Queries word vectors from selected embedding for all words in the target corpus.
 	Args:
 		emb_name(str): Name of the selected embedding
@@ -106,17 +105,20 @@ def extract(emb_name, file_dir, set_name = None, download = True):
 				sentences = sent_tokenize(f.read())
 				for s in sentences:
 					inp_vocab.update(word_tokenize(s))
-	inp_vocab = list(inp_vocab)
+	if case_sensitive: inp_vocab = list(inp_vocab)
+	else: inp_vocab = [lower(word) for word in list(inp_vocab)]
 	inp_vsize = len(inp_vocab)
+
 	print ('Embedding extraction begins.')
 	query, extract_emb = '', pd.DataFrame()
-	i,loss, proc_cnt, query_size = 0,0,4,400
-# 16 Workers: 64s, 8 Workers: 65s, 1 Worker: +2 mins, 4 Workers:
+	i,loss, proc_cnt, query_size = 0,0,16,400
 
 	with progressbar.ProgressBar(max_value=inp_vsize) as bar:
 		p = Pool(proc_cnt)
 		while i < inp_vsize:
-			query = ['SELECT * FROM ' + emb_name + ' where text in' + \
+			if case_sensitive: case = 'text'
+			else: case = 'lower(text)'
+			query = ['SELECT * FROM ' + emb_name + ' where '+ case + ' in' + \
 				str(tuple(inp_vocab[i + query_size*j :i + query_size*(j+1)])) for j in range(0,proc_cnt)]
 			partial_map = partial(dw.query, set_name)
 			word_vecs = p.map(partial_map, query)
@@ -130,13 +132,9 @@ def extract(emb_name, file_dir, set_name = None, download = True):
 			i += query_size * proc_cnt
 
 	print ('Embedding successfully extracted.')
-
 	if download == True:
 		with open(emb_name+'_extracted.csv', 'w') as extract_csv:
-			extract_emb.to_csv(extract_csv, encoding = 'utf-8')
-
-	print ('There are ' + str(loss) + " tokens that are in this pretrained word embedding.")
-	print (str(loss/inp_vsize) + "%" + " of words in target corpus are in this pretrained word embedding.")
+			extract_emb.to_csv(extract_csv, encoding = 'utf-8', index = False)
 	return extract_emb
 
 def upload(set_name, emb_path, metadata = {}, summary = None):
