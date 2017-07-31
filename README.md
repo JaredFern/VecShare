@@ -1,7 +1,5 @@
 # VecShare: Framework for Sharing Word Embeddings
-Library is in the process of being updated. See https://github.com/MarcusYYY/WordEmbeddingPlatform for a stable test version of the VecShare framework. A fully operational release will be publicly available prior to the EMNLP 2017 conference, by **September 7**.
-
-A Python library for word embedding query, selection and download. Read more about VecShare: bit.ly/VecShare.
+A Python library for word embedding query, selection and download. Read more about VecShare: https://bit.ly/VecShare.
 
 ## Prerequisites:
 Before installing this library, install the datadotworld Python library:
@@ -19,13 +17,23 @@ export DW_AUTH_TOKEN=<YOUR_TOKEN>   \\ Mac OSX or Unix Systems
 dw configure                        \\ Windows Systems
 ```
 
-## Quickstart:
+## Installation:
 Install the VecShare Python library:
 ```
 pip install vecshare
 ```
 
 See **Advanced Setup** for details on creating new indexers or signature methods.
+
+## Supported Functions
+The VecShare Python library currently supports:
+  * [`check`](#check-available-embeddings): See available embeddings
+  * [`format`](#embedding-upload-or-update): Autoformat a header to upload an embedding to the data store
+  * [`upload`](#embedding-upload-or-update): Upload a new embedding to the datastore
+  * [`update`](#embedding-upload-or-update): Update an existing embedding or its metadata
+  * [`query`](#embedding-query): Look up word vectors from a specific embedding
+  * [`extract`:](#embedding-extraction) Download word vectors for only the vocabulary of a specific corpus
+  * [`download`](#full-embedding-download): Download an entire shared embedding
 
 ### Check Available Embeddings
 **`check()`:**  Returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
@@ -34,7 +42,7 @@ The default indexer aggregates a set of embeddings by polling `data.world` weekl
 
 See **Advanced Setup**, if you would like to use a custom indexer.
 
-** Example:**
+**For Example:**
 ```python
 >>> import vecshare as vs
 >>> vs.check()
@@ -59,7 +67,6 @@ Embeddings must be uploaded as a .csv file with a header in the format: ['text',
 
 **`format(emb_path)`:** Reformats existing embeddings in the .csv format with a header in the correct format for tabular access.
   * **emb_path (str):** Path to the embedding being formatted
-
 
 **`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
   * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
@@ -88,12 +95,13 @@ Case Sensitive: False
 **`query(words, emb_name, set_name = None, case_sensitive = False)`:**  Returns a  pandas DataFrame, such that each row specifies a word vector from the query.
   * **words (list):** List of word vectors being requested
   * **emb_name (str):** Title of the embedding containing the requested word vectors
-  * **set_name (str, opt):** Specify only if multiple embeddings exist with the same emb_name
+  * **set_name (str, opt):** Specify if multiple embeddings exist with the same emb_name
   * **case_sensitive (bool):** Set to True if word vectors must exactly case match those in words
 
 ** Example:**
 ```python
->>>>>> vs.query(['The', 'farm'], 'agriculture_40')
+>>> import vecshare as vs
+>>> vs.query(['The', 'farm'], 'agriculture_40')
    text       d99       d98       d97       d96       d95   ...           d1      d0  
 0   the -1.414755  0.414973  1.115698  0.034085  0.542921   ...   0.037287 -1.004704  
 1  farm  0.349535 -0.379208 -0.189476  2.776809 -0.099886   ...   0.067443 -1.391604  
@@ -110,10 +118,11 @@ Parameters:
   * **case_sensitive (bool):** Set to True if word vectors must exactly case match those in words
 
 **For example:**
-```
-vs.extract('agriculture_40', 'Test_Input/reutersR8_all')
+```python
+>>> import vecshare as vs
+>>> vs.extract('agriculture_40', 'Test_Input/reutersR8_all')
 Embedding extraction begins.
-100% (23584 of 23584) |#######################################################################| Elapsed Time: 0:01:04 Time: 0:01:04
+100% (23584 of 23584) |################################| Elapsed Time: 0:01:04
 Embedding successfully extracted.
 
               text       d99       d98       d97       d96       d95    ... \
@@ -140,6 +149,27 @@ Embedding successfully extracted.
 8     -0.181255  0.005893 -0.718905  0.373082  0.784821  0.393715  -0.000517  
 9      1.348299  0.180225  1.686486  0.535154 -2.005099 -1.424234  -2.677770    
 [9320 rows x 101 columns]
+```
+### Full Embedding Download
+**`download(emb_name, set_name=None):`** Returns the full embedding, containing all uploaded word vectors in the shared embedding and saves the embedding as a .csv file in the current directory
+  * **emb_name (str):** Title of the shared embedding
+  * **set_name (str, opt):** Specify if multiple embeddings exist with the same emb_name
+
+**For example:**
+```python
+>>> import vecshare as vs
+>>> vs.download('agriculture_40')
+text        d0        d1        d2        d3        d4  \
+0              the  1.477964  0.016078 -0.193995  1.113142  0.765398   
+1               of -0.048878 -0.597735  0.196982  0.220966  1.463818   
+2               to  1.932197  1.587676 -0.321938 -0.592603  0.137684   
+3               in  0.294486  1.061131 -0.119670  0.611166  0.436337   
+4             said -0.609932 -0.481854  0.028189  0.755433 -0.493351   
+5                a  0.750953  0.342545 -0.758257  0.381944  0.824879   
+6              and  0.991821 -0.252496  0.011951  0.384948  0.505785   
+7              mln  0.215208  3.330005  0.458480  0.484309  1.128098   
+8               vs  0.512198  3.565070 -1.698517  0.813855 -0.002396   
+9             dlrs -0.026384  1.905773  1.313683  0.825797  1.981671
 ```
 
 ## Advanced Setup

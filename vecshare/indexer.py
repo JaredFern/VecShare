@@ -15,25 +15,7 @@ INDEXER_URL  = BASE_URL + INDEXER  # URL for index & signature file
 DATASETS_URL = 'https://data.world/datasets/' + EMB_TAG           # URL for uploaded embeddings
 DW_CLASS_TAG = 'dw-dataset-name DatasetCard__name___2U4-H'
 
-def new_embsets():
-    # Retrieve source for data.world:vecshare search results
-    wd = webdriver.Chrome()
-    wd.get(DATASETS_URL)
-    try:
-        WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, DW_CLASS_TAG)))
-    except: pass
-
-    # Scrape source for dataset links
-    soup = BeautifulSoup(wd.page_source, 'lxml')
-    sets    = [s["href"][1:] for s in soup.find_all('a', DW_CLASS_TAG)]
-    dw_api = dw.api_client()
-    wd.close()    
-
-
-def refresh_indexer():
-    '''
-
-    '''
+def refresh_indexer(force_update = False):
     # Retrieve source for data.world:vecshare search results
     wd = webdriver.Chrome()
     wd.get(DATASETS_URL)
@@ -47,20 +29,26 @@ def refresh_indexer():
     dw_api = dw.api_client()
     wd.close()
 
+    header = [
+        "Embedding Name",
+        "Dataset Name",
+        "Contributor",
+        "Embedding Type",
+        "Dimension",
+        "Vocab Size",
+        "Case Sensitive",
+        "File Format",
+        "Download URL"
+    ]
+
+    header_check = set([lower(field.replace(' ', '_')) for field in header])
+    index_fields = set(dw.query(INDEXER, 'SELECT * FROM '+ INDEX_FILE).dataframe)
+    # prev_sets    =
+
+    if (force_update or header_check != index_fields):
+
     with open(INDEX_FILE+".csv", 'w') as ind:
         # CUSTOM INDEXERS: Add additional metadata fields to header file
-        header = [
-            "Embedding Name",
-            "Dataset Name",
-            "Contributor",
-            "Embedding Type",
-            "Dimension",
-            "Vocab Size",
-            "Case Sensitive",
-            "File Format",
-            "Download URL"
-        ]
-
         csv_writer = csv.DictWriter(ind, fieldnames = header)
         csv_writer.writeheader()
         for s in sets:
