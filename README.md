@@ -10,11 +10,9 @@ pip install datadotworld
 Configure the datadotworld library with your data.world API token.
 Your token is obtainable on data.world under [Settings > Advanced](https://data.world/settings/advanced)
 
-Set your token:
+Set your token as an environment variable:
 ```
-export DW_AUTH_TOKEN=<YOUR_TOKEN>   \\ Mac OSX or Unix Systems
-
-dw configure                        \\ Windows Systems
+export DW_AUTH_TOKEN=<YOUR_TOKEN>
 ```
 
 ## Installation:
@@ -174,6 +172,12 @@ text        d0        d1        d2        d3        d4  \
 
 ## Advanced Setup
 ### Custom Signature Methods:
-
+Additional signature methods can be included in the library by downloading the library and adding to the `signatures.py` file. To incorporate new signatures into future releases of the official VecShare library, fork and merge your changes with the github repository.
 
 ### Custom Indexers:
+Custom indexers can be added by updating the `indexer.py` file.
+```python
+INDEXER      = <NEW INDEXER DATASET ID>
+INDEX_FILE   = <NAME OF THE INDEX FILE>
+EMB_TAG      = <EMB TAG>
+```

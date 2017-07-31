@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,os,progressbar,csv,indexer,signatures, pdb
+import sys,os,progressbar,csv,indexer,signatures
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from multiprocessing import Pool
@@ -192,16 +192,13 @@ def download(emb_name, set_name=None):
 		set_name(opt, str): Specify if multiple embeddings exist with same name
 
 	Returns:
-		Pandas DataFrame containing the selected embedding
 		.csv embedding saved to the current working directory
 	'''
-
+	DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 	set_name = _error_check(emb_name)
-	query = 'SELECT download_url FROM ' + indexer.INDEX_FILE + \
-		' WHERE embedding_name = ' + emb_name + ' and dataset_name = '+ set_name
-	download_url = dw.query(indexer.INDEXER_URL, query)
-	emb_url = (download_url.dataframe).iloc[0]
-	emb_dataframe = pd.read_csv(emb_url)
+    query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
+    payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
+    emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
+
 	with open(emb_name + '.csv', 'w') as download_emb:
-		emb_dataframe.to_csv(download_emb, encoding='utf-8', index=False)
-	return emb_dataframe
+		download_emb.write(emb_text)
