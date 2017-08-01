@@ -12,4 +12,4 @@ Associated with this platform is a broker-centered model.
 from __future__ import absolute_import
 
 
-__version__ = '1.0.4'
+__version__ = '1.0.8'

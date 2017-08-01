@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,os,progressbar,csv,indexer,signatures
+import sys,os,progressbar,csv
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from multiprocessing import Pool
+
+try:
+    import indexer, signatures
+except ImportError:
+    import vecshare.indexer as indexer, vecshare.signatures as signatures
 
 def _error_check(emb_name, set_name):
 	emb_list = dw.query(indexer.INDEXER_URL, 'SELECT * FROM ' + indexer.INDEX_FILE).dataframe

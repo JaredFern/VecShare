@@ -1,6 +1,6 @@
 import pandas as pd
 import datadotworld as dw
-import os,string,re,codecs,requests,indexer,io
+import os,string,re,codecs,requests,io
 from nltk.tokenize import sent_tokenize,word_tokenize
 from collections import Counter
 from operator import itemgetter
@@ -8,9 +8,13 @@ from operator import itemgetter
 try:
     from StringIO import StringIO
     import cPickle as pickle
-except: import io, pickle
+    import indexer
+except ImportError:
+    import io, pickle
+    import vecshare.indexer as indexer
+
 """
-    File containing signature similarity measures and aassociated helpers.
+    File containing signature similarity measures and associated helpers.
     Implemented similarity measures:
         AvgRank Similarity
 """
