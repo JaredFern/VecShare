@@ -43,7 +43,7 @@ See [**Advanced Setup**](#advanced-setup), if you would like to use a custom ind
 
 **For Example:**
 ```python
->>> import vecshare as vs
+>>> from vecshare import vecshare as vs
 >>> vs.check()
         embedding_name                              dataset_name contributor  \
 0            reutersr8         jaredfern/reuters-word-embeddings   jaredfern   
@@ -94,7 +94,7 @@ Case Sensitive: False
 * **inp_dir (str):** Path to the directory containing the target corpus.
 
 ```python
->>> import vecshare.signatures as sigs
+>>> from vecshare import signatures as sigs
 >>> sigs.avgrank('Test_Input')
 u'reutersR8
 ```
@@ -108,7 +108,7 @@ Additional custom  similarity and selection methods can be added. See ['Advanced
 
 ** Example:**
 ```python
->>> import vecshare as vs
+>>> from vecshare import vecshare as vs
 >>> vs.query(['The', 'farm'], 'agriculture_40')
    text       d99       d98       d97       d96       d95   ...           d1      d0  
 0   the -1.414755  0.414973  1.115698  0.034085  0.542921   ...   0.037287 -1.004704  
@@ -127,7 +127,7 @@ Parameters:
 
 **For example:**
 ```python
->>> import vecshare as vs
+>>> from vecshare import vecshare as vs
 >>> vs.extract('agriculture_40', 'Test_Input/reutersR8_all')
 Embedding extraction begins.
 100% (23584 of 23584) |################################| Elapsed Time: 0:01:04
@@ -165,7 +165,7 @@ Embedding successfully extracted.
 
 **For example:**
 ```python
->>> import vecshare as vs
+>>> from vecshare import vecshare as vs
 >>> vs.download('agriculture_40')
               text        d0        d1        d2        d3        d4  \
 0              the  1.477964  0.016078 -0.193995  1.113142  0.765398   
