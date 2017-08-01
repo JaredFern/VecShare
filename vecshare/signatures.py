@@ -24,7 +24,6 @@ def avgrank(inp_dir):
     stopwords  = signatures.pop('stopwords', None)
     test_vocab = avgrank_corp(inp_dir,stopwords)
     for emb_name,emb_sig in signatures.items():
-        if len(emb_sig) <100: print emb_sig
         rank_dict.update({emb_name: 0})
         for ind in range(0,len(signatures[emb_name])):
 			curr_inpword = signatures[emb_name][ind]

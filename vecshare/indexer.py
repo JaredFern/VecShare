@@ -82,7 +82,7 @@ def refresh(force_update=False):
                 file_format = curr_emb['format']
                 vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
 
-                print "Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + "."
+                print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 meta_dict.update({
                             u'embedding_name': emb_name,
                             u"dataset_name": set_name,
@@ -93,7 +93,7 @@ def refresh(force_update=False):
                             u"last_updated": last_updated})
                 embeddings.append(deepcopy(meta_dict))
             else:
-                print "Re-indexed embedding: " + emb_name+ " from dataset " + set_name + "."
+                print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 query = 'SELECT * FROM '+ INDEX_FILE + ' WHERE dataset_name = "'+ \
                 set_name +'" and embedding_name = "'+ emb_name +'"'
                 prev_row = dw.query(INDEXER, query).dataframe
@@ -106,10 +106,10 @@ def refresh(force_update=False):
         for emb in embeddings:
             csv_writer.writerow(emb)
 
-    print "Updating index file at " + INDEXER_URL
+    print ("Updating index file at " + INDEXER_URL)
     dw_api.upload_files(INDEXER, os.getcwd() + '/'+ INDEX_FILE +'.csv')
     if updated:
-        print "Updating avg_rank signatures"
+        print ("Updating avg_rank signatures")
         avgrank_refresh()
 
 
