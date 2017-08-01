@@ -151,7 +151,7 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 				for s in sentences:
 					inp_vocab.update(word_tokenize(s))
 	if case_sensitive: inp_vocab = list(inp_vocab)
-	else: inp_vocab = [lower(word) for word in list(inp_vocab)]
+	else: inp_vocab = [word.lower() for word in list(inp_vocab)]
 	inp_vsize = len(inp_vocab)
 
 	print ('Embedding extraction begins.')

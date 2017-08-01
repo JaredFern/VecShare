@@ -8,9 +8,11 @@ from copy import deepcopy
 import datadotworld as dw
 import pandas as pd
 import csv,os,datetime,requests,string
-from StringIO import StringIO
-import cPickle as pickle
 
+try: 
+    from StringIO import StringIO
+    import cPickle as pickle
+except: import io, pickle
 INDEXER      = 'jaredfern/vecshare-indexer'
 INDEX_FILE   = 'index_file'
 EMB_TAG      = 'vecshare'
@@ -124,7 +126,11 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
         emb_name, set_name = row['embedding_name'], row['dataset_name']
         query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
         payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
-        emb_text = StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
+        if sys.version_info < (3,):
+            emb_text = StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
+        else:
+            emb_text = io.StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
+
         emb_df = pd.read_csv(emb_text, nrows = 1.5 *sig_cnt)
 
         wordlist = emb_df.iloc[0:2*stopword_cnt,0].values
@@ -142,7 +148,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     for emb_name, emb_sig  in signatures.items():
         emb_sig = emb_sig.tolist()
         for word in stopwords:
-			if word in emb_sig: emb_sig.remove(word)
+            if word in emb_sig: emb_sig.remove(word)
         emb_sig = emb_sig[:sig_cnt]
         print ("Generated AvgRank signature for: " + emb_name)
         signatures.update({emb_name:emb_sig})
