@@ -9,7 +9,7 @@ import datadotworld as dw
 import pandas as pd
 import csv,os,datetime,requests,string
 
-try: 
+try:
     from StringIO import StringIO
     import cPickle as pickle
 except: import io, pickle
@@ -24,6 +24,16 @@ DATASETS_URL = 'https://data.world/datasets/' + EMB_TAG           # URL for uplo
 DW_CLASS_TAG = 'dw-dataset-name DatasetCard__name___2U4-H'
 
 def refresh(force_update=False):
+    '''
+    Crawls for new embeddings with the tag and update the index file with new
+    embedding sets, or changes to existing shared embeddings.
+
+    Args:
+        force_update(bool, opt): Hard reset, re-index ALL available embeddings.
+            If False, only scrape metadata for new embedding sets.
+    Returns: 
+        None. Uploads new index_file.csv to indexer on data store.
+    '''
     # Retrieve source for data.world:vecshare search results
     wd = webdriver.Chrome()
     wd.get(DATASETS_URL)
@@ -117,6 +127,22 @@ def refresh(force_update=False):
 
 # Determines the n most frequent stop words, found in at least 'tolerance' fraction of the embeddings.
 def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
+    '''
+    If there are changes to the set of shared embeddings, refresh the AvgRank signature.
+
+    Generate a set of at most `stopword_cnt` stopwords that occur in at least
+    `tolerance` * emb_cnt embeddings. Generate signatures for the embeddings
+    using the `sig_cnt` most common remaining words.
+
+    Args:
+        tolerance (float): Frequency at which a stopword must occur
+        sig_cnt (int): Size of AvgRank signature vocab_size
+        stopword_cnt (int): Max number of stopwords
+
+    Returns:
+        None. Uploads new ar_sig.txt (serialized signatures) to data store.
+    '''
+
     stopwords, emb_vocab, signatures = [],{}, {}
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 
