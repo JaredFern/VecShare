@@ -2,7 +2,6 @@ import pandas as pd
 import datadotworld as dw
 import cPickle as pickle
 import os,string,re,codecs,requests,indexer
-from gensim.models import Word2Vec
 from nltk.tokenize import sent_tokenize,word_tokenize
 from collections import Counter
 from operator import itemgetter

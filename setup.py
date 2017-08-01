@@ -60,7 +60,6 @@ setup(
 	install_requires=[
 		'pandas',
 		'numpy',
-		'gensim',
 		'nltk',
 		'scipy',
 		'datadotworld',
