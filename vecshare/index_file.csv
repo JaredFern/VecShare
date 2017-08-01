@@ -1,19 +1,18 @@
-File Format,Vocab Size,Last Updated,Case Sensitive,Embedding Type,Embedding Name,Dataset Name,Contributor,Dimension
-csv,45157,2017-07-31T20:31:57.259Z,False,word2vec,ptb_plus_defs,dcdowney/penn-treebank-word-embeddings,dcdowney,300
-csv,20204,2017-07-30T07:13:30.918Z,False,word2vec,reuters21578,jaredfern/reuters-word-embeddings,jaredfern,100
-csv,7822,2017-07-30T07:13:30.918Z,False,word2vec,reutersr8,jaredfern/reuters-word-embeddings,jaredfern,100
-csv,34161,2017-07-30T20:19:31.892Z,False,word2vec,20news,jaredfern/20-newsgroup-embedding,jaredfern,100
-csv,19006,2017-07-30T20:33:41.710Z,False,word2vec,agriculture_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,17322,2017-07-30T20:33:41.710Z,False,word2vec,arts_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,17506,2017-07-30T20:33:41.710Z,False,word2vec,books_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,18845,2017-07-30T20:33:41.710Z,False,word2vec,econ_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,19928,2017-07-30T20:33:41.710Z,False,word2vec,govt_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,18107,2017-07-30T20:33:41.710Z,False,word2vec,movies_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,19442,2017-07-30T20:33:41.710Z,False,word2vec,weather_40,jaredfern/new-york-times-word-embeddings,jaredfern,100
-csv,15062,2017-07-30T07:11:12.776Z,False,word2vec,brown,jaredfern/brown-corpus,jaredfern,100
-csv,47955,2017-07-30T20:04:19.891Z,False,word2vec,maas_imdb,jaredfern/movie-review-embeddings,jaredfern,100
-csv,14887,2017-07-30T20:04:19.891Z,False,word2vec,panglee,jaredfern/movie-review-embeddings,jaredfern,100
-csv,11334,2017-07-30T20:15:55.336Z,False,word2vec,oanc_spoken,jaredfern/oanc-word-embeddings,jaredfern,100
-csv,72975,2017-07-30T20:15:55.336Z,False,word2vec,oanc_written,jaredfern/oanc-word-embeddings,jaredfern,100
-csv,399923,2017-07-30T20:44:02.247Z,False,glove,glove_gigaword100d,jaredfern/gigaword-glove-embedding,jaredfern,100
-csv,71291,2017-07-30T17:42:15.001Z,False,word2vec,text8_emb,jaredfern/text-8-w-2-v,jaredfern,50
+vocab_size,last_updated,file_format,case_sensitive,contributor,embedding_name,embedding_type,dimension,dataset_name
+45157,2017-07-31 20:31:57.259000+00:00,csv,False,dcdowney,ptb_plus_defs,word2vec,300,dcdowney/penn-treebank-word-embeddings
+20204,2017-07-30 07:13:30.918000+00:00,csv,False,jaredfern,reuters21578,word2vec,100,jaredfern/reuters-word-embeddings
+7822,2017-07-30 07:13:30.918000+00:00,csv,False,jaredfern,reutersR8,word2vec,100,jaredfern/reuters-word-embeddings
+19006,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,agriculture_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+17322,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,arts_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+17506,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,books_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+18845,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,econ_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+19928,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,govt_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+18107,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,movies_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+19442,2017-07-30 20:33:41.710000+00:00,csv,False,jaredfern,weather_40,word2vec,100,jaredfern/new-york-times-word-embeddings
+15062,2017-07-30 07:11:12.776000+00:00,csv,False,jaredfern,brown,word2vec,100,jaredfern/brown-corpus
+71291,2017-07-30 17:42:15.001000+00:00,csv,False,jaredfern,text8_emb,word2vec,50,jaredfern/text-8-w-2-v
+47955,2017-07-30 20:04:19.891000+00:00,csv,False,jaredfern,maas_imdb,word2vec,100,jaredfern/movie-review-embeddings
+14887,2017-07-30 20:04:19.891000+00:00,csv,False,jaredfern,panglee,word2vec,100,jaredfern/movie-review-embeddings
+11334,2017-07-30 20:15:55.336000+00:00,csv,False,jaredfern,OANC_Spoken,word2vec,100,jaredfern/oanc-word-embeddings
+72975,2017-07-30 20:15:55.336000+00:00,csv,False,jaredfern,OANC_Written,word2vec,100,jaredfern/oanc-word-embeddings
+399923,2017-07-30 20:44:02.247000+00:00,csv,False,jaredfern,glove_Gigaword100d,glove,100,jaredfern/gigaword-glove-embedding

@@ -10,10 +10,11 @@ pip install datadotworld
 Configure the datadotworld library with your data.world API token.
 Your token is obtainable on data.world under [Settings > Advanced](https://data.world/settings/advanced)
 
-Set your token as an environment variable:
+Set your data.world token:
 ```
-export DW_AUTH_TOKEN=<YOUR_TOKEN>
+dw config
 ```
+To avoid resetting the token for every terminal instance, consider adding your token as a global environment variable to your bash profile or permanent environment variables.
 
 ## Installation:
 Install the VecShare Python library:
@@ -21,7 +22,7 @@ Install the VecShare Python library:
 pip install vecshare
 ```
 
-See **Advanced Setup** for details on creating new indexers or signature methods.
+See [**Advanced Setup**](#advanced-setup) for details on creating new indexers or signature methods.
 
 ## Supported Functions
 The VecShare Python library currently supports:
@@ -36,9 +37,9 @@ The VecShare Python library currently supports:
 ### Check Available Embeddings
 **`check()`:**  Returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
-The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `data.world/jaredfern/vecshare-indexer`.
+The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `https://data.world/jaredfern/vecshare-indexer`.
 
-See **Advanced Setup**, if you would like to use a custom indexer.
+See [**Advanced Setup**](#advanced-setup), if you would like to use a custom indexer.
 
 **For Example:**
 ```python
@@ -88,7 +89,16 @@ Embedding Type: word2vec
 Token Count: 6000000
 Case Sensitive: False
 ```
+### Embedding Selection
+**`signatures.avgrank(inp_dir)`:** Returns the shared embedding most similar to the user's target corpus, using the AvgRank method described in the VecShare paper. *Note: Computation is performed locally. Users' corpora will not be shared with other users*
+* **inp_dir (str):** Path to the directory containing the target corpus.
 
+```python
+>>> import vecshare.signatures as sigs
+>>> sigs.avgrank('Test_Input')
+u'reutersR8
+```
+Additional custom  similarity and selection methods can be added. See ['Advanced Setup'](#advanced-setup).
 ### Embedding Query
 **`query(words, emb_name, set_name = None, case_sensitive = False)`:**  Returns a  pandas DataFrame, such that each row specifies a word vector from the query.
   * **words (list):** List of word vectors being requested
@@ -157,7 +167,7 @@ Embedding successfully extracted.
 ```python
 >>> import vecshare as vs
 >>> vs.download('agriculture_40')
-text        d0        d1        d2        d3        d4  \
+              text        d0        d1        d2        d3        d4  \
 0              the  1.477964  0.016078 -0.193995  1.113142  0.765398   
 1               of -0.048878 -0.597735  0.196982  0.220966  1.463818   
 2               to  1.932197  1.587676 -0.321938 -0.592603  0.137684   

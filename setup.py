@@ -1,8 +1,8 @@
 """
 VecShare: A Framework for Sharing Word Embeddings
 
-This is a framework for efficiently selecting, querying and downloading word 
-embeddings for NLP tasks. This release follows the indexer-signature model 
+This is a framework for efficiently selecting, querying and downloading word
+embeddings for NLP tasks. This release follows the indexer-signature model
 described in <PROCEEDINGS URL>.
 
 Latest Stable Version: 'pip install vecshare'
@@ -27,17 +27,17 @@ def find_version(*paths):
 
 setup(
 	name = 'vecshare',
-	version = find_version('wordembeddign','__init__.py'),
+	version = find_version('vecshare','__init__.py'),
 	description = 'Python library for sharing word embeddings',
 	long_description = read('README.md'),
 	url = 'hhttps://github.com/JaredFern/VecShare',
-	author = 'JaredFern', 
-	author_email = 'jared.fern@u.northwestern.edu, marcusyuzc1992',
+	author = 'JaredFern',
+	author_email = 'jared.fern@u.northwestern.edu',
 	license = 'Apache 2.0',
 	packages = find_packages(),
 	keywords = [
 		'word embeddings',
-		'wordvector',
+		'word vectors',
 		'vecshare',
 		'natural language processing',
 		'NLP'
@@ -60,14 +60,13 @@ setup(
 	install_requires=[
 		'pandas',
 		'numpy',
-		'requests',
 		'gensim',
 		'nltk',
 		'scipy',
-		'gensim',
 		'datadotworld',
 		'bs4',
-		'selenium'
+		'selenium',
+		'progressbar',
 	],
 
 	setup_requires=[

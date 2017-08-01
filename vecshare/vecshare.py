@@ -196,9 +196,9 @@ def download(emb_name, set_name=None):
 	'''
 	DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 	set_name = _error_check(emb_name)
-    query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
-    payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
-    emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
+	query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
+	payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
+	emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
 
 	with open(emb_name + '.csv', 'w') as download_emb:
 		download_emb.write(emb_text)
