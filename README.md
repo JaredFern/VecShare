@@ -12,7 +12,10 @@ Your token is obtainable on data.world under [Settings > Advanced](https://data.
 
 Set your data.world token:
 ```
-dw config
+dw configure
+
+
+export DW_AUTH_TOKEN=<DATA.WORLD_API_TOKEN>
 ```
 To avoid resetting the token for every terminal instance, consider adding your token as a global environment variable to your bash profile or permanent environment variables.
 
