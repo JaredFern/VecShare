@@ -1,29 +1,24 @@
 # VecShare: Framework for Sharing Word Embeddings
 A Python library for word embedding query, selection and download. Read more about VecShare: https://bit.ly/VecShare.
 
-## Prerequisites:
-Before installing this library, install the datadotworld Python library:
-```
-pip install datadotworld
-```
-
-Configure the datadotworld library with your data.world API token.
-Your token is obtainable on data.world under [Settings > Advanced](https://data.world/settings/advanced)
-
-Set your data.world token:
-```
-dw configure
-
-
-export DW_AUTH_TOKEN=<DATA.WORLD_API_TOKEN>
-```
-To avoid resetting the token for every terminal instance, consider adding your token as a global environment variable to your bash profile or permanent environment variables.
-
 ## Installation:
 Install the VecShare Python library:
 ```
 pip install vecshare
 ```
+Before using the `vecshare` library, configure the datadotworld library with your API token.
+Your token is obtainable on data.world under [Settings > Advanced](https://data.world/settings/advanced)
+
+Set your data.world token using:
+```
+dw configure
+
+```
+or
+```
+export DW_AUTH_TOKEN=<DATA.WORLD_API_TOKEN>
+```
+To avoid resetting the token for each terminal instance, add your token as an environment variable to your bash profile or permanent environment variables.
 
 See [**Advanced Setup**](#advanced-setup) for details on creating new indexers or signature methods.
 
@@ -109,7 +104,7 @@ Additional custom  similarity and selection methods can be added. See ['Advanced
   * **set_name (str, opt):** Specify if multiple embeddings exist with the same emb_name
   * **case_sensitive (bool):** Set to True if word vectors must exactly case match those in words
 
-** Example:**
+**For Example:**
 ```python
 >>> from vecshare import vecshare as vs
 >>> vs.query(['The', 'farm'], 'agriculture_40')
