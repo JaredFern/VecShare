@@ -12,7 +12,6 @@ Your token is obtainable on data.world under [Settings > Advanced](https://data.
 Set your data.world token using:
 ```
 dw configure
-
 ```
 or
 ```

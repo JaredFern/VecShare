@@ -8,10 +8,8 @@ from operator import itemgetter
 try:
     from StringIO import StringIO
     import cPickle as pickle
-    import indexer
 except ImportError:
     import io, pickle
-    import vecshare.indexer as indexer
 
 """
     File containing signature similarity measures and associated helpers.

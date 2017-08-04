@@ -7,23 +7,20 @@ from dateutil.parser import parse
 from copy import deepcopy
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string
+import csv,os,datetime,requests,string,sys
 
 try:
     from StringIO import StringIO
     import cPickle as pickle
-except: import io, pickle
-INDEXER      = 'jaredfern/vecshare-indexer'
-INDEX_FILE   = 'index_file'
-EMB_TAG      = 'vecshare'
-SIGNATURES   = 'jaredfern/vecshare-signatures'
+    import sim_benchmark
+    import info,vecshare
+except:
+    import io, pickle
+    import vecshare.sim_benchmark as sim_benchmark
+    import vecshare.vecshare as vecshare
+    import vecshare.info as info
 
-BASE_URL     = 'https://data.world/'
-INDEXER_URL  = BASE_URL + INDEXER  # URL for index & signature file
-DATASETS_URL = 'https://data.world/datasets/' + EMB_TAG           # URL for uploaded embeddings
-DW_CLASS_TAG = 'dw-dataset-name DatasetCard__name___2U4-H'
-
-def refresh(force_update=False):
+def refresh(force_update=True):
     '''
     Crawls for new embeddings with the tag and update the index file with new
     embedding sets, or changes to existing shared embeddings.
@@ -31,21 +28,21 @@ def refresh(force_update=False):
     Args:
         force_update(bool, opt): Hard reset, re-index ALL available embeddings.
             If False, only scrape metadata for new embedding sets.
-    Returns: 
+    Returns:
         None. Uploads new index_file.csv to indexer on data store.
     '''
     # Retrieve source for data.world:vecshare search results
     wd = webdriver.Chrome()
-    wd.get(DATASETS_URL)
+    wd.get(info.DATASETS_URL)
     try:
-        WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, DW_CLASS_TAG)))
+        WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, info.DW_CLASS_TAG)))
     except: pass
 
     soup    = BeautifulSoup(wd.page_source, 'lxml')
-    sets    = [s["href"][1:] for s in soup.find_all('a', DW_CLASS_TAG)]
+    sets    = [s["href"][1:] for s in soup.find_all('a', info.DW_CLASS_TAG)]
     dw_api  = dw.api_client()
     wd.close()
-    print ("Found " + str(len(sets)) + " sets with the " + EMB_TAG + " tag.")
+    print ("Found " + str(len(sets)) + " sets with the " + info.EMB_TAG + " tag.")
 
     base_header = [
         u"embedding_name",
@@ -56,13 +53,13 @@ def refresh(force_update=False):
         u"vocab_size",
         u"case_sensitive",
         u"file_format",
-        u"last_updated"
+        u"last_updated",
+        u"similarity_score"
     ]
     embeddings, prev_indexed, updated = [], [], False
-    prev_query = dw.query(INDEXER, 'SELECT dataset_name, embedding_name FROM '+ INDEX_FILE).dataframe
+    prev_query = dw.query(info.INDEXER, 'SELECT dataset_name, embedding_name FROM '+ info.INDEX_FILE).dataframe
     for ind, row in prev_query.iterrows():
         prev_indexed.append("/".join(row.values))
-
     for set_name in sets:
         curr_set  = dw.load_dataset(set_name,force_update = True) # Embedding
         curr_meta = dw_api.get_dataset(set_name)
@@ -78,9 +75,9 @@ def refresh(force_update=False):
             emb_name = each['name'][:-4]
             emb_updated = parse(each['updated'])
             try:
-                ind_query = 'SELECT last_updated FROM '+ INDEX_FILE + \
+                ind_query = 'SELECT last_updated FROM '+ info.INDEX_FILE + \
                 ' WHERE dataset_name = "'+ set_name +'" and embedding_name = "'+emb_name+'"'
-                query_results = dw.query(INDEXER, ind_query).dataframe.iloc[0].values[0]
+                query_results = dw.query(info.INDEXER, ind_query).dataframe.iloc[0].values[0]
                 last_indexed = parse(query_results)
                 last_updated = emb_updated if emb_updated > set_updated else set_updated
             except: pass
@@ -94,6 +91,9 @@ def refresh(force_update=False):
                 file_format = curr_emb['format']
                 vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
 
+                emb_simset = vecshare.extract(emb_name,'sim_vocab', set_name=set_name, case_sensitive=True,progress=False)
+                sim_score  = sim_benchmark._eval_all(emb_simset)
+
                 print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 meta_dict.update({
                             u'embedding_name': emb_name,
@@ -102,24 +102,26 @@ def refresh(force_update=False):
                             u"dimension":emb_dim,
                             u"vocab_size":vocab_size,
                             u"file_format":file_format,
-                            u"last_updated": last_updated})
+                            u"last_updated": last_updated,
+                            u"similarity_score": sim_score})
+                print meta_dict
                 embeddings.append(deepcopy(meta_dict))
             else:
                 print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
-                query = 'SELECT * FROM '+ INDEX_FILE + ' WHERE dataset_name = "'+ \
+                query = 'SELECT * FROM '+ info.INDEX_FILE + ' WHERE dataset_name = "'+ \
                 set_name +'" and embedding_name = "'+ emb_name +'"'
-                prev_row = dw.query(INDEXER, query).dataframe
+                prev_row = dw.query(info.INDEXER, query).dataframe
                 embeddings.extend(prev_row.to_dict(orient='records'))
 
-    with open(INDEX_FILE+".csv", 'w') as ind:
+    with open(info.INDEX_FILE+".csv", 'w') as ind:
         meta_header = set().union(*embeddings)
         csv_writer = csv.DictWriter(ind, fieldnames = meta_header)
         csv_writer.writeheader()
         for emb in embeddings:
             csv_writer.writerow(emb)
 
-    print ("Updating index file at " + INDEXER_URL)
-    dw_api.upload_files(INDEXER, os.getcwd() + '/'+ INDEX_FILE +'.csv')
+    print ("Updating index file at " + info.INDEXER_URL)
+    dw_api.upload_files(info.INDEXER, os.getcwd() + '/'+ info.INDEX_FILE +'.csv')
     if updated:
         print ("Updating avg_rank signatures")
         avgrank_refresh()
@@ -146,7 +148,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     stopwords, emb_vocab, signatures = [],{}, {}
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 
-    emb_list = dw.query(INDEXER, 'SELECT embedding_name, dataset_name FROM ' + INDEX_FILE).dataframe
+    emb_list = dw.query(info.INDEXER, 'SELECT embedding_name, dataset_name FROM ' + info.INDEX_FILE).dataframe
     threshold = int(0.5 + tolerance * emb_list.shape[0])
     for ind, row in emb_list.iterrows():
         emb_name, set_name = row['embedding_name'], row['dataset_name']
@@ -183,4 +185,4 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     pickle.dump(signatures, open( "ar_sig.txt", "w" ))
     dw_api  = dw.api_client()
     print ("Uploading AvgRank signatures")
-    dw_api.upload_files(SIGNATURES, os.getcwd() + '/ar_sig.txt')
+    dw_api.upload_files(info.SIGNATURES, os.getcwd() + '/ar_sig.txt')
