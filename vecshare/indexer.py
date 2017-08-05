@@ -7,7 +7,7 @@ from dateutil.parser import parse
 from copy import deepcopy
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string,sys
+import csv,os,datetime,requests,string,sys,re
 
 try:
     from StringIO import StringIO
@@ -20,7 +20,7 @@ except:
     import vecshare.vecshare as vecshare
     import vecshare.info as info
 
-def refresh(force_update=True):
+def refresh(force_update=False):
     '''
     Crawls for new embeddings with the tag and update the index file with new
     embedding sets, or changes to existing shared embeddings.
@@ -66,10 +66,13 @@ def refresh(force_update=True):
         set_updated = parse(curr_meta['updated'])
         meta_dict = dict()
         contrib   = curr_meta["owner"]
+        resources = curr_set.describe()['resources']
 
-        for field in curr_meta["summary"].split(","):
-            meta_field = field.split(":")
-            meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+        summary = StringIO(curr_meta["summary"])
+        for line in summary:
+            for field in line.split(","):
+                meta_field = field.split(":")
+                meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
 
         for each in curr_meta['files']:
             emb_name = each['name'][:-4]
@@ -90,10 +93,29 @@ def refresh(force_update=True):
                 emb_dim = len(curr_emb['schema']['fields']) - 1
                 file_format = curr_emb['format']
                 vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
-
                 emb_simset = vecshare.extract(emb_name,'sim_vocab', set_name=set_name, case_sensitive=True,progress=False)
                 sim_score  = sim_benchmark._eval_all(emb_simset)
 
+                temp_0  ='original/'+emb_name.lower()+'.csv'
+                temp_1  =emb_name.lower()
+
+                for d in resources:
+                    if d['name'] == temp_0:
+                        try:
+                            description = StringIO(d['description'])
+                            for line in description:
+                                for field in line.split(","):
+                                    meta_field = field.split(":")
+                                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                        except: pass
+                    if d['name'] == temp_1:
+                        try:
+                            description = StringIO(d['description'])
+                            for line in description:
+                                for field in line.split(","):
+                                    meta_field = field.split(":")
+                                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                        except: pass
                 print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 meta_dict.update({
                             u'embedding_name': emb_name,
@@ -104,7 +126,6 @@ def refresh(force_update=True):
                             u"file_format":file_format,
                             u"last_updated": last_updated,
                             u"similarity_score": sim_score})
-                print meta_dict
                 embeddings.append(deepcopy(meta_dict))
             else:
                 print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
@@ -125,7 +146,6 @@ def refresh(force_update=True):
     if updated:
         print ("Updating avg_rank signatures")
         avgrank_refresh()
-
 
 # Determines the n most frequent stop words, found in at least 'tolerance' fraction of the embeddings.
 def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):

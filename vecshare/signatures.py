@@ -43,6 +43,13 @@ def avgrank(inp_dir):
     ranked_embs = sorted(rank_dict.items(),key=itemgetter(1))
     return ranked_embs[0][0]
 
+def simscore():
+    max_query = "SELECT MAX(int(similarity_score)) FROM" +info.INDEX_FILE
+    max_simscore = dw.query(info.INDEXER, max_query).dataframe.iloc[0][0]
+    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE similarity_score >= " + str(max_simscore)
+    top_emb = dw.query(info.INDEXER, emb_query)
+    return top_emb
+
 # Generates the 5000 most frequent words in the test corpus from the txt file
 def avgrank_corp(inp_dir,hdv_vocab, num = 5000):
     cnt, vocab = Counter(), []
