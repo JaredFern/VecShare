@@ -171,10 +171,9 @@ def _emb_rank():
             if line == '[comment]: <> (Leaderboard End)\n':
                 post_table = line
                 post = True
-    print post_table
     with open('../README.md', 'w') as readme:
         readme.write(pre_table+'\n')
-        readme.write(md_table+'\n')
+        readme.write(md_table+'\n\n')
         readme.write(post_table)
 
 # Determines the n most frequent stop words, found in at least 'tolerance' fraction of the embeddings.

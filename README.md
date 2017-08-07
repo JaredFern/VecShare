@@ -24,6 +24,7 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 | text8_emb          | jaredfern     | word2vec         |          50 |           0.414024 |
 | weather_40         | jaredfern     | word2vec         |         100 |           0.404718 |
 | OANC_Written       | jaredfern     | word2vec         |         100 |           0.351561 |
+
 [comment]: <> (Leaderboard End)
 
 **Word Pair Similarity Tasks:**
