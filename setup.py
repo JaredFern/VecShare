@@ -43,7 +43,7 @@ setup(
 		'NLP'
 	],
 	classifiers = [
-		'Development Status :: 4 - Beta',
+		'Development Status :: 5 - Production/Stable',
 		'Intended Audience :: Developers',
 		'Intended Audience :: Science/Research',
 		'Operating System :: OS Independent',
@@ -66,6 +66,7 @@ setup(
 		'bs4',
 		'selenium',
 		'progressbar2',
+		'tabulate'
 	],
 
 	setup_requires=[

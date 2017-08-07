@@ -7,24 +7,24 @@ from nltk.tokenize import sent_tokenize,word_tokenize
 from multiprocessing import Pool
 
 try:
-    import info, signatures
+	import info, signatures
 except ImportError:
-    import vecshare.info as info, vecshare.signatures as signatures
+	import vecshare.info as info, vecshare.signatures as signatures
 
 def _error_check(emb_name, set_name):
-    if set_name: return set_name
-    emb_list = dw.query(info.INDEXER_URL, 'SELECT * FROM ' + info.INDEX_FILE).dataframe
-    emb_names = emb_list.embedding_name
+	if set_name: return set_name
+	emb_list = dw.query(info.INDEXER_URL, 'SELECT * FROM ' + info.INDEX_FILE).dataframe
+	emb_names = emb_list.embedding_name
 
-    if len(emb_list.loc[emb_list['embedding_name'] == emb_name]) > 1 and set_name == None:
-        raise ValueError("More than one embedding exists with name: " + emb_name + "Try again specifying set_name.")
-    if emb_name not in emb_names.values:
-        raise ValueError("No embedding exists with name: " + emb_name)
-    if emb_list.file_format[emb_names == emb_name].iloc[0] not in ['csv', 'tsv', 'xls', 'rdf', 'json']:
-        raise TypeError(emb_name + " was not uploaded in a queryable format. Try reuploading as: csv, tsv, xls, rdf, or json.")
+	if len(emb_list.loc[emb_list['embedding_name'] == emb_name]) > 1 and set_name == None:
+		raise ValueError("More than one embedding exists with name: " + emb_name + "Try again specifying set_name.")
+	if emb_name not in emb_names.values:
+		raise ValueError("No embedding exists with name: " + emb_name)
+	if emb_list.file_format[emb_names == emb_name].iloc[0] not in ['csv', 'tsv', 'xls', 'rdf', 'json']:
+		raise TypeError(emb_name + " was not uploaded in a queryable format. Try reuploading as: csv, tsv, xls, rdf, or json.")
 
-    set_name = emb_list.loc[emb_list['embedding_name'] == emb_name].dataset_name.iloc[0]
-    return set_name
+	set_name = emb_list.loc[emb_list['embedding_name'] == emb_name].dataset_name.iloc[0]
+	return set_name
 
 def check():
 	"""Displays indexed word embeddings and associated metadata.
@@ -82,7 +82,7 @@ def upload(set_name, emb_path, metadata = {}, summary = None):
 	dw_api.upload_files(set_name, [emb_path])
 
 def update(set_name, emb_path = "", metadata = {}, summary = ""):
-    '''Update the embedding or metadata for an existing dataset on data.world
+	'''Update the embedding or metadata for an existing dataset on data.world
 
 	Args:
 		set_name (str): Name of the dataset being updated (format: owner/id)
@@ -92,11 +92,11 @@ def update(set_name, emb_path = "", metadata = {}, summary = ""):
 
 	Returns: None (Create a new data.world dataset with the shared embedding)
 	'''
-    dw_api = dw.api_client()
-    if emb_path:
-        dw_api.upload_files(set_name, emb_path)
+	dw_api = dw.api_client()
+	if emb_path:
+		dw_api.upload_files(set_name, emb_path)
 
-    if metadata or emb_description:
+	if metadata or emb_description:
 		metadata_str = ""
 		for key,val in metadata.items():
 			metadata_str += key + ":" + val + ", "

@@ -5,6 +5,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 from copy import deepcopy
+from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
 import csv,os,datetime,requests,string,sys,re
@@ -27,7 +28,7 @@ def refresh(force_update=False):
 
     Args:
         force_update(bool, opt): Hard reset, re-index ALL available embeddings.
-            If False, only scrape metadata for new embedding sets.
+            If False, only scrape metadata or new embedding sets.
     Returns:
         None. Uploads new index_file.csv to indexer on data store.
     '''
@@ -71,8 +72,10 @@ def refresh(force_update=False):
         summary = StringIO(curr_meta["summary"])
         for line in summary:
             for field in line.split(","):
-                meta_field = field.split(":")
-                meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                try:
+                    meta_field = field.split(":")
+                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                except: pass
 
         for each in curr_meta['files']:
             emb_name = each['name'][:-4]
@@ -146,6 +149,33 @@ def refresh(force_update=False):
     if updated:
         print ("Updating avg_rank signatures")
         avgrank_refresh()
+        _emb_rank()
+
+def _emb_rank():
+    query = 'SELECT embedding_name, contributor, embedding_type, dimension, similarity_score \
+        FROM ' + info.INDEX_FILE
+    results = dw.query(info.INDEXER,query).dataframe
+    results = results.nlargest(10, 'similarity_score')
+
+    md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
+    with open('../README.md', 'r') as readme:
+        pre, post = True,False
+        pre_table,post_table = '',''
+        for line in readme:
+            if pre:
+                pre_table += line
+                if line == '[comment]: <> (Leaderboard Start)\n':
+                    pre = False
+                    print 'switch'
+            if post: post_table+= line
+            if line == '[comment]: <> (Leaderboard End)\n':
+                post_table = line
+                post = True
+    print post_table
+    with open('../README.md', 'w') as readme:
+        readme.write(pre_table+'\n')
+        readme.write(md_table+'\n')
+        readme.write(post_table)
 
 # Determines the n most frequent stop words, found in at least 'tolerance' fraction of the embeddings.
 def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):

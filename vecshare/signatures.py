@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import datadotworld as dw
 import os,string,re,codecs,requests,io
 from nltk.tokenize import sent_tokenize,word_tokenize
@@ -8,14 +9,24 @@ from operator import itemgetter
 try:
     from StringIO import StringIO
     import cPickle as pickle
+    import info
 except ImportError:
     import io, pickle
+    import vecshare.info as info
 
 """
     File containing signature similarity measures and associated helpers.
     Implemented similarity measures:
         AvgRank Similarity
+        Analogy Score
 """
+def simscore():
+    max_query = "SELECT MAX(similarity_score) FROM " +info.INDEX_FILE
+    max_simscore = np.floor(100*dw.query(info.INDEXER, max_query).dataframe.iloc[0][0])/100
+    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE similarity_score >= " + str(max_simscore)
+    top_emb = dw.query(info.INDEXER, emb_query).dataframe
+    return top_emb.iloc[0][0]
+
 # AvgRank Signature Similarity Method
 def avgrank(inp_dir):
     rank_dict = dict()
@@ -42,13 +53,6 @@ def avgrank(inp_dir):
 
     ranked_embs = sorted(rank_dict.items(),key=itemgetter(1))
     return ranked_embs[0][0]
-
-def simscore():
-    max_query = "SELECT MAX(int(similarity_score)) FROM" +info.INDEX_FILE
-    max_simscore = dw.query(info.INDEXER, max_query).dataframe.iloc[0][0]
-    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE similarity_score >= " + str(max_simscore)
-    top_emb = dw.query(info.INDEXER, emb_query)
-    return top_emb
 
 # Generates the 5000 most frequent words in the test corpus from the txt file
 def avgrank_corp(inp_dir,hdv_vocab, num = 5000):

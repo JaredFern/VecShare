@@ -1,5 +1,41 @@
 # VecShare: Framework for Sharing Word Embeddings
-A Python library for word embedding query, selection and download. Read more about VecShare: https://bit.ly/VecShare.
+
+## About VecShare
+The vecshare python library for word embedding query, selection and download. The vecshare python library uses indexers to regularly poll the data.world datastore for uploaded embeddings, record associated metadata, and generate lightweight signatures representing each uploaded embedding. Users can select embeddings for use by specifying the name of the desired embedding or using provided methods to compare their corpus against indexed signatures and extracting the embedding most similar to the target corpus.
+
+Read more about VecShare: `https://bit.ly/VecShare`.
+
+## Embedding Leaderboard
+Each indexed is evaluated and assigned a score on 10 word pair similarity tasks. A score is calculated by measuring the average Spearman correlation of the word vector cosine similarities and human-rated similarity for each word pair.
+
+**Highest Scoring Word Embeddings:**
+
+[comment]: <> (Leaderboard Start)
+
+| embedding_name     | contributor   | embedding_type   |   dimension |   similarity_score |
+|:-------------------|:--------------|:-----------------|------------:|-------------------:|
+| glove_Gigaword100d | jaredfern     | glove            |         100 |           0.486142 |
+| books_40           | jaredfern     | word2vec         |         100 |           0.46239  |
+| govt_40            | jaredfern     | word2vec         |         100 |           0.44659  |
+| econ_40            | jaredfern     | word2vec         |         100 |           0.439729 |
+| arts_40            | jaredfern     | word2vec         |         100 |           0.434811 |
+| agriculture_40     | jaredfern     | word2vec         |         100 |           0.417867 |
+| movies_40          | jaredfern     | word2vec         |         100 |           0.417606 |
+| text8_emb          | jaredfern     | word2vec         |          50 |           0.414024 |
+| weather_40         | jaredfern     | word2vec         |         100 |           0.404718 |
+| OANC_Written       | jaredfern     | word2vec         |         100 |           0.351561 |
+[comment]: <> (Leaderboard End)
+
+**Word Pair Similarity Tasks:**
+* WS-353: Finkelstein et. al, 2002
+* MC-30: Miller and Charles, 1991
+* MEN: Bruni et. al, 2012
+* MTurk-287: Radinsky et. al, 2011
+* MTurk-771: Halawi and Dror, 2012
+* Rare-Word: Luong et. al, 2013
+* SimLex-999: Hill et. al, 2014
+* SimVerb-3500: Gerz et. al, 2016
+* Verb-144: Baker et. al, 2014
 
 ## Installation:
 Install the VecShare Python library:
@@ -24,7 +60,7 @@ See [**Advanced Setup**](#advanced-setup) for details on creating new indexers o
 ## Supported Functions
 The VecShare Python library currently supports:
   * [`check`](#check-available-embeddings): See available embeddings
-  * [`format`](#embedding-upload-or-update): Autoformat a header to upload an embedding to the data store
+  * [`format`](#embedding-upload-or-update): Autoformat an embedding for upload to the data store
   * [`upload`](#embedding-upload-or-update): Upload a new embedding to the datastore
   * [`update`](#embedding-upload-or-update): Update an existing embedding or its metadata
   * [`query`](#embedding-query): Look up word vectors from a specific embedding
@@ -86,7 +122,7 @@ Embedding Type: word2vec
 Token Count: 6000000
 Case Sensitive: False
 ```
-### Embedding Selection
+### Embedding
 **`signatures.avgrank(inp_dir)`:** Returns the shared embedding most similar to the user's target corpus, using the AvgRank method described in the VecShare paper. *Note: Computation is performed locally. Users' corpora will not be shared with other users*
 * **inp_dir (str):** Path to the directory containing the target corpus.
 
@@ -95,6 +131,8 @@ Case Sensitive: False
 >>> sigs.avgrank('Test_Input')
 u'reutersR8
 ```
+**`signatures.simscore():`** Returns the embedding currently scoring highest on the word pair similarity task suite.
+
 Additional custom  similarity and selection methods can be added. See ['Advanced Setup'](#advanced-setup).
 ### Embedding Query
 **`query(words, emb_name, set_name = None, case_sensitive = False)`:**  Returns a  pandas DataFrame, such that each row specifies a word vector from the query.
