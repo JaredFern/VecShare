@@ -153,14 +153,15 @@ def refresh(force_update=False):
         avgrank_refresh()
 
 def _emb_rank():
-    query = 'SELECT embedding_name, contributor, embedding_type, dimension, score \
+    query = 'SELECT embedding_name, dataset_name, contributor, embedding_type, dimension, score \
         FROM ' + info.INDEX_FILE
     results = dw.query(info.INDEXER,query).dataframe
     results = results.nlargest(10, 'score')
     for ind,row in results.iterrows():
         results.loc[ind, 'embedding_name'] = \
-        "[`"+row['embedding_name']+"`]("+ info.BASE_URL + row['contributor'] + "/"+ row["embedding_name"] +")"
+        "[`"+row['embedding_name']+"`]("+ info.BASE_URL + row['dataset_name'] + "/"+ row["embedding_name"] +")"
 
+    results.drop('dataset_name', axis=1)
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
     with open('../README.md', 'r') as readme:
         pre, post = True,False
