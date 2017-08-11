@@ -1,6 +1,7 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
@@ -8,8 +9,8 @@ from copy import deepcopy
 from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string,sys,re
-
+import csv,os,datetime,requests,string,sys,re,pdb
+from pprint import pprint
 try:
     from StringIO import StringIO
     import cPickle as pickle
@@ -33,6 +34,8 @@ def refresh(force_update=False):
         None. Uploads new index_file.csv to indexer on data store.
     '''
     # Retrieve source for data.world:vecshare search results
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
     wd = webdriver.Chrome()
     wd.get(info.DATASETS_URL)
     try:
@@ -45,21 +48,11 @@ def refresh(force_update=False):
     wd.close()
     print ("Found " + str(len(sets)) + " sets with the " + info.EMB_TAG + " tag.")
 
-    base_header = [
-        u"embedding_name",
-        u"dataset_name",
-        u"contributor",
-        u"embedding_type",
-        u"dimension",
-        u"vocab_size",
-        u"case_sensitive",
-        u"file_format",
-        u"last_updated",
-    ]
     embeddings, prev_indexed, updated = [], [], False
-    prev_query = dw.query(info.INDEXER, 'SELECT dataset_name, embedding_name FROM '+ info.INDEX_FILE).dataframe
-    for ind, row in prev_query.iterrows():
-        prev_indexed.append("/".join(row.values))
+    if not force_update:
+        prev_query = dw.query(info.INDEXER, 'SELECT dataset_name, embedding_name FROM '+ info.INDEX_FILE).dataframe
+        for ind, row in prev_query.iterrows():
+            prev_indexed.append("/".join(row.values))
     for set_name in sets:
         curr_set  = dw.load_dataset(set_name,force_update = True) # Embedding
         curr_meta = dw_api.get_dataset(set_name)
@@ -71,10 +64,12 @@ def refresh(force_update=False):
         summary = StringIO(curr_meta["summary"])
         for line in summary:
             for field in line.split(","):
-                try:
-                    meta_field = field.split(":")
-                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
-                except: pass
+                for sent in field.split("."):
+                    try:
+                        meta_field = field.split(":")
+                        if len(meta_field) == 2:
+                            meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                    except: pass
 
         for each in curr_meta['files']:
             emb_name = each['name'][:-4]
@@ -85,7 +80,9 @@ def refresh(force_update=False):
                 query_results = dw.query(info.INDEXER, ind_query).dataframe.iloc[0].values[0]
                 last_indexed = parse(query_results)
                 last_updated = emb_updated if emb_updated > set_updated else set_updated
-            except: pass
+            except:
+                last_updated = datetime.datetime.now()
+                pass
 
             # Index if new embedding or if metadata/embedding updated since last Index
             if (force_update) or (set_name + '/' + emb_name not in prev_indexed) or (last_indexed < last_updated):
@@ -106,17 +103,21 @@ def refresh(force_update=False):
                         try:
                             description = StringIO(d['description'])
                             for line in description:
-                                for field in line.split(","):
-                                    meta_field = field.split(":")
-                                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                                for sent in line.split("."):
+                                    for field in sent.split(","):
+                                        meta_field = field.split(":")
+                                        if len(meta_field) == 2:
+                                            meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
                         except: pass
                     if d['name'] == temp_1:
                         try:
                             description = StringIO(d['description'])
                             for line in description:
-                                for field in line.split(","):
-                                    meta_field = field.split(":")
-                                    meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                                for sent in line.split('.'):
+                                    for field in sent.split(","):
+                                        meta_field = field.split(":")
+                                        if len(meta_field) == 2:
+                                            meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
                         except: pass
                 print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 meta_dict.update(score_dict)
@@ -129,6 +130,7 @@ def refresh(force_update=False):
                             u"file_format":file_format,
                             u"last_updated": last_updated})
                 embeddings.append(deepcopy(meta_dict))
+                pprint (meta_dict)
             else:
                 print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 query = 'SELECT * FROM '+ info.INDEX_FILE + ' WHERE dataset_name = "'+ \
@@ -146,9 +148,9 @@ def refresh(force_update=False):
     print ("Updating index file at " + info.INDEXER_URL)
     dw_api.upload_files(info.INDEXER, os.getcwd() + '/'+ info.INDEX_FILE +'.csv')
     if updated:
+        _emb_rank()
         print ("Updating avg_rank signatures")
         avgrank_refresh()
-        _emb_rank()
 
 def _emb_rank():
     query = 'SELECT embedding_name, contributor, embedding_type, dimension, score \
@@ -156,8 +158,8 @@ def _emb_rank():
     results = dw.query(info.INDEXER,query).dataframe
     results = results.nlargest(10, 'score')
     for ind,row in results.iterrows():
-        results.loc[index, 'embedding_name'] = \
-        "(`"+row['embedding_name']+"`)(#"+ info.BASE_URL + "/" + row['contributor'] + "/"+ row["embedding_name"] +")"
+        results.loc[ind, 'embedding_name'] = \
+        "[`"+row['embedding_name']+"`](#"+ info.BASE_URL + "/" + row['contributor'] + "/"+ row["embedding_name"] +")"
 
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
     with open('../README.md', 'r') as readme:
@@ -168,7 +170,6 @@ def _emb_rank():
                 pre_table += line
                 if line == '[comment]: <> (Leaderboard Start)\n':
                     pre = False
-                    print 'switch'
             if post: post_table+= line
             if line == '[comment]: <> (Leaderboard End)\n':
                 post_table = line

@@ -12,7 +12,7 @@ try:
 except ImportError:
 	import vecshare.info as info, vecshare.signatures as signatures
 
-def _error_check(emb_name, set_name):
+def _error_check(emb_name, set_name=None):
 	if set_name: return set_name
 	emb_list = dw.query(info.INDEXER_URL, 'SELECT * FROM ' + info.INDEX_FILE).dataframe
 	emb_names = emb_list.embedding_name
@@ -198,7 +198,7 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 	query, extract_emb = '', pd.DataFrame()
 	i,loss, proc_cnt, query_size = 0,0,16,400
 
-	if progress == True: progressbar.ProgressBar(max_value=inp_vsize)
+	if progress == True: bar = progressbar.ProgressBar(max_value=inp_vsize)
 
 	p = Pool(proc_cnt)
 	while i < inp_vsize:
@@ -222,6 +222,7 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 	if download == True:
 		with open(emb_name+'_extracted.csv', 'w') as extract_csv:
 			extract_emb.to_csv(extract_csv, encoding = 'utf-8', index = False)
+	p.terminate()
 	return extract_emb
 
 def download(emb_name, set_name=None):
@@ -242,4 +243,4 @@ def download(emb_name, set_name=None):
 	emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
 
 	with open(emb_name + '.csv', 'w') as download_emb:
-		download_emb.write(emb_text)
+		download_emb.write(emb_text.encode('utf-8'))

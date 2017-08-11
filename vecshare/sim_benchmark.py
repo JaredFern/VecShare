@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import csv, os, random
+import csv, os, random, sys
 
 def _eval_all(emb_simset):
     inp_emb = {}
@@ -12,12 +12,13 @@ def _eval_all(emb_simset):
 
     score_dict = {}
     score_dict['score'] = 0
-    files = next(os.walk('Test_Input'))[2]
-    for testfile in files:
-        f_path = 'Test_Input/'+files
-        score_dict[testfile] = _eval_sim(f_path, inp_emb)
-        if  testfile != 'mc-30.csv':
-            score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
+    for root,dirs,files in os.walk('Test_Input'):
+        files = [testfile for testfile in files if testfile[0]!='.']
+        for testfile in files:
+            f_path = 'Test_Input/'+testfile
+            score_dict[testfile[:-4]] = _eval_sim(f_path, inp_emb)
+            if  testfile != 'mc-30.csv':
+                score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
     return score_dict
 
 def _eval_sim(testfile,inp_emb):
@@ -45,9 +46,12 @@ def _eval_sim(testfile,inp_emb):
             temp_test, temp_emb = np.empty(0), np.empty(0)
             randvec1 = random.choice(inp_emb.values())
             randvec2 = random.choice(inp_emb.values())
-            embdrop = np.append(embdrop, np.dot(randvec1,randvec2))
+            if np.any(randvec1) and np.any(randvec2):
+                embdrop = np.append(embdrop, np.dot(randvec1, randvec2))
+            else:
+                embdrop = np.append(embdrop, 0)
 
-        temp_test = np.append(tests, testdrop)
+        temp_test = np.append(test, testdrop)
         temp_emb  = np.append(emb, embdrop)
 
         spearman_corr += (np.corrcoef(temp_test, temp_emb)[0, 1])/5
