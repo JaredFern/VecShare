@@ -159,7 +159,7 @@ def _emb_rank():
     results = results.nlargest(10, 'score')
     for ind,row in results.iterrows():
         results.loc[ind, 'embedding_name'] = \
-        "[`"+row['embedding_name']+"`](#"+ info.BASE_URL + "/" + row['contributor'] + "/"+ row["embedding_name"] +")"
+        "[`"+row['embedding_name']+"`]("+ info.BASE_URL + "/" + row['contributor'] + "/"+ row["embedding_name"] +")"
 
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
     with open('../README.md', 'r') as readme:

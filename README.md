@@ -14,16 +14,16 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 
 | embedding_name                                                            | contributor   | embedding_type   |   dimension |    score |
 |:--------------------------------------------------------------------------|:--------------|:-----------------|------------:|---------:|
-| [`glove_Gigaword100d`](#https://data.world//jaredfern/glove_Gigaword100d) | jaredfern     | glove            |         100 | 0.456143 |
-| [`text8_emb`](#https://data.world//jaredfern/text8_emb)                   | jaredfern     | word2vec         |          50 | 0.37306  |
-| [`books_40`](#https://data.world//jaredfern/books_40)                     | jaredfern     | word2vec         |         100 | 0.303337 |
-| [`OANC_Written`](#https://data.world//jaredfern/OANC_Written)             | jaredfern     | word2vec         |         100 | 0.293891 |
-| [`econ_40`](#https://data.world//jaredfern/econ_40)                       | jaredfern     | word2vec         |         100 | 0.290213 |
-| [`agriculture_40`](#https://data.world//jaredfern/agriculture_40)         | jaredfern     | word2vec         |         100 | 0.289704 |
-| [`govt_40`](#https://data.world//jaredfern/govt_40)                       | jaredfern     | word2vec         |         100 | 0.288382 |
-| [`weather_40`](#https://data.world//jaredfern/weather_40)                 | jaredfern     | word2vec         |         100 | 0.277633 |
-| [`arts_40`](#https://data.world//jaredfern/arts_40)                       | jaredfern     | word2vec         |         100 | 0.266848 |
-| [`movies_40`](#https://data.world//jaredfern/movies_40)                   | jaredfern     | word2vec         |         100 | 0.263914 |
+| [`glove_Gigaword100d`](https://data.world//jaredfern/glove_Gigaword100d) | jaredfern     | glove            |         100 | 0.456143 |
+| [`text8_emb`](https://data.world//jaredfern/text8_emb)                   | jaredfern     | word2vec         |          50 | 0.37306  |
+| [`books_40`](https://data.world//jaredfern/books_40)                     | jaredfern     | word2vec         |         100 | 0.303337 |
+| [`OANC_Written`](https://data.world//jaredfern/OANC_Written)             | jaredfern     | word2vec         |         100 | 0.293891 |
+| [`econ_40`](https://data.world//jaredfern/econ_40)                       | jaredfern     | word2vec         |         100 | 0.290213 |
+| [`agriculture_40`](https://data.world//jaredfern/agriculture_40)         | jaredfern     | word2vec         |         100 | 0.289704 |
+| [`govt_40`](https://data.world//jaredfern/govt_40)                       | jaredfern     | word2vec         |         100 | 0.288382 |
+| [`weather_40`](https://data.world//jaredfern/weather_40)                 | jaredfern     | word2vec         |         100 | 0.277633 |
+| [`arts_40`](https://data.world//jaredfern/arts_40)                       | jaredfern     | word2vec         |         100 | 0.266848 |
+| [`movies_40`](https://data.world//jaredfern/movies_40)                   | jaredfern     | word2vec         |         100 | 0.263914 |
 
 [comment]: <> (Leaderboard End)
 
