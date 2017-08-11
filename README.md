@@ -101,6 +101,12 @@ Embeddings must be uploaded as a .csv file with a header in the format: ['text',
 **`format(emb_path)`:** Reformats existing embeddings in the .csv format with a header in the correct format for tabular access.
   * **emb_path (str):** Path to the embedding being formatted
 
+**`compress(emb_path)`:** Compress an embedding by reducing vocab_size, dimensionality, and precision. The vocab_size most frequent words will be preserved with pca_dim dimensions obtained using sklearn-PCA to transform the reduced matrix. Embedding values	will be limited to the precision digits.
+	*	**`emb_path(str)`:** Path to embedding
+	*	**`vocab_size(int,opt)`:** Number of words being retained
+	*	**`pca_dim(int,opt)`:** Number of dimensions being retained
+	*	**`precision(int,opt)`:** Precision of word vector elements
+
 **`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
   * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
   * **emb_path (str):** Path to embedding being uploaded
@@ -123,7 +129,7 @@ Embedding Type: word2vec
 Token Count: 6000000
 Case Sensitive: False
 ```
-### Embedding
+### Embedding Selection
 **`signatures.avgrank(inp_dir)`:** Returns the shared embedding most similar to the user's target corpus, using the AvgRank method described in the VecShare paper. *Note: Computation is performed locally. Users' corpora will not be shared with other users*
 * **inp_dir (str):** Path to the directory containing the target corpus.
 

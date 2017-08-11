@@ -3,7 +3,7 @@ VecShare: A Framework for Sharing Word Embeddings
 
 This is a framework for efficiently selecting, querying and downloading word
 embeddings for NLP tasks. This release follows the indexer-signature model
-described in <PROCEEDINGS URL>.
+described in bit.ly/VecShare
 
 Latest Stable Version: 'pip install vecshare'
 File Issues at: 'https://github.com/JaredFern/VecShare'

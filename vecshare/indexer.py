@@ -9,8 +9,7 @@ from copy import deepcopy
 from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string,sys,re,pdb
-from pprint import pprint
+import csv,os,datetime,requests,string,sys,re
 try:
     from StringIO import StringIO
     import cPickle as pickle
@@ -81,7 +80,8 @@ def refresh(force_update=False):
                 last_indexed = parse(query_results)
                 last_updated = emb_updated if emb_updated > set_updated else set_updated
             except:
-                last_updated = datetime.datetime.now()
+                last_updated = datetime.datetime.utcnow()
+                last_indexed = datetime.datetime.utcnow()
                 pass
 
             # Index if new embedding or if metadata/embedding updated since last Index
@@ -130,7 +130,6 @@ def refresh(force_update=False):
                             u"file_format":file_format,
                             u"last_updated": last_updated})
                 embeddings.append(deepcopy(meta_dict))
-                pprint (meta_dict)
             else:
                 print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
                 query = 'SELECT * FROM '+ info.INDEX_FILE + ' WHERE dataset_name = "'+ \
