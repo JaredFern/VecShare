@@ -12,18 +12,18 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 
 [comment]: <> (Leaderboard Start)
 
-| embedding_name                                                                                   | dataset_name                             | contributor   | embedding_type   |   dimension |    score |
-|:-------------------------------------------------------------------------------------------------|:-----------------------------------------|:--------------|:-----------------|------------:|---------:|
-| [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding/glove_Gigaword100d) | jaredfern/gigaword-glove-embedding       | jaredfern     | glove            |         100 | 0.456143 |
-| [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v/text8_emb)                               | jaredfern/text-8-w-2-v                   | jaredfern     | word2vec         |          50 | 0.37306  |
-| [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings/books_40)               | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.303337 |
-| [`OANC_Written`](https://data.world/jaredfern/oanc-word-embeddings/OANC_Written)                 | jaredfern/oanc-word-embeddings           | jaredfern     | word2vec         |         100 | 0.293891 |
-| [`econ_40`](https://data.world/jaredfern/new-york-times-word-embeddings/econ_40)                 | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.290213 |
-| [`agriculture_40`](https://data.world/jaredfern/new-york-times-word-embeddings/agriculture_40)   | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.289704 |
-| [`govt_40`](https://data.world/jaredfern/new-york-times-word-embeddings/govt_40)                 | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.288382 |
-| [`weather_40`](https://data.world/jaredfern/new-york-times-word-embeddings/weather_40)           | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.277633 |
-| [`arts_40`](https://data.world/jaredfern/new-york-times-word-embeddings/arts_40)                 | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.266848 |
-| [`movies_40`](https://data.world/jaredfern/new-york-times-word-embeddings/movies_40)             | jaredfern/new-york-times-word-embeddings | jaredfern     | word2vec         |         100 | 0.263914 |
+| embedding_name                                                                  | contributor   | embedding_type   |   dimension |    score |
+|:--------------------------------------------------------------------------------|:--------------|:-----------------|------------:|---------:|
+| [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding)   | jaredfern     | glove            |         100 | 0.456143 |
+| [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v)                        | jaredfern     | word2vec         |          50 | 0.37306  |
+| [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings)       | jaredfern     | word2vec         |         100 | 0.303337 |
+| [`OANC_Written`](https://data.world/jaredfern/oanc-word-embeddings)             | jaredfern     | word2vec         |         100 | 0.293891 |
+| [`econ_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.290213 |
+| [`agriculture_40`](https://data.world/jaredfern/new-york-times-word-embeddings) | jaredfern     | word2vec         |         100 | 0.289704 |
+| [`govt_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.288382 |
+| [`weather_40`](https://data.world/jaredfern/new-york-times-word-embeddings)     | jaredfern     | word2vec         |         100 | 0.277633 |
+| [`arts_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.266848 |
+| [`movies_40`](https://data.world/jaredfern/new-york-times-word-embeddings)      | jaredfern     | word2vec         |         100 | 0.263914 |
 
 [comment]: <> (Leaderboard End)
 
