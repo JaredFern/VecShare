@@ -20,15 +20,50 @@ except ImportError:
         AvgRank Similarity
         Analogy Score
 """
-def simscore():
-    max_query = "SELECT MAX(similarity_score) FROM " +info.INDEX_FILE
+def simscore(test_set="score"):
+    '''
+    Select the embedding scoring highest on the `test_set` word comparison task.
+    Score is calculated by measuring the average Spearman correlation of the word
+    vector cosine similarities and human-rated similarity for each word pair.
+    Missing words are substituted with random words
+
+    Args:
+        test_set (str,opt): Embedding will be returned with highest score on `test_set`
+            If test_set is not specified, embedding will be returned with highest
+            average score over all similarity tasks (excluding MC-30)
+
+    Returns:
+        emb_name: Name of Embedding with highest simscore
+
+    Word Pair Similarity Tasks:
+    * WS-353: Finkelstein et. al, 2002
+    * MC-30: Miller and Charles, 1991
+        (Excluded from composite score, already included in SimLex-999 Test Set)
+    * MEN: Bruni et. al, 2012
+    * MTurk-287: Radinsky et. al, 2011
+    * MTurk-771: Halawi and Dror, 2012
+    * Rare-Word: Luong et. al, 2013
+    * SimLex-999: Hill et. al, 2014
+    * SimVerb-3500: Gerz et. al, 2016
+    * Verb-144: Baker et. al, 2014
+    '''
+    max_query = "SELECT MAX(" + test_set +") FROM " +info.INDEX_FILE
     max_simscore = np.floor(100*dw.query(info.INDEXER, max_query).dataframe.iloc[0][0])/100
-    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE similarity_score >= " + str(max_simscore)
+    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE " +test_set +" >= " + str(max_simscore)
     top_emb = dw.query(info.INDEXER, emb_query).dataframe
     return top_emb.iloc[0][0]
 
 # AvgRank Signature Similarity Method
 def avgrank(inp_dir):
+    '''
+    Returns the most similar embedding in terms of vocab and frequency overlap with the user corpus.
+
+    Args:
+        inp_dir(str): Path to user's corpus
+
+    Returns:
+        emb_name(str): Name of most similar embedding
+    '''
     rank_dict = dict()
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
     query_url = "https://query.data.world/file_download/jaredfern/vecshare-signatures/ar_sig.txt"
@@ -41,7 +76,7 @@ def avgrank(inp_dir):
     signatures = pickle.load(emb_text)
 
     stopwords  = signatures.pop('stopwords', None)
-    test_vocab = avgrank_corp(inp_dir,stopwords)
+    test_vocab = _avgrank_corp(inp_dir,stopwords)
     for emb_name,emb_sig in signatures.items():
         rank_dict.update({emb_name: 0})
         for ind in range(0,len(signatures[emb_name])):
@@ -55,7 +90,7 @@ def avgrank(inp_dir):
     return ranked_embs[0][0]
 
 # Generates the 5000 most frequent words in the test corpus from the txt file
-def avgrank_corp(inp_dir,hdv_vocab, num = 5000):
+def _avgrank_corp(inp_dir,hdv_vocab, num = 5000):
     cnt, vocab = Counter(), []
 	# Counter for all words in the corpus
     for (root, dirs, files) in os.walk(inp_dir):

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import csv, os
+import csv, os, random
 
 def _eval_all(emb_simset):
     inp_emb = {}
@@ -9,24 +9,46 @@ def _eval_all(emb_simset):
         vec = np.fromiter(map(float, vec[1:]), dtype = np.float32)
         norm = np.linalg.norm(vec)
         inp_emb[word] = vec/norm if (norm != 0) else [vec]
-    files = ['Test_Input/'+ f_name for f_name in next(os.walk('Test_Input'))[2]]
-    sim_score = 0
+
+    score_dict = {}
+    score_dict['score'] = 0
+    files = next(os.walk('Test_Input'))[2]
     for testfile in files:
-        sim_score += _eval_sim(testfile, inp_emb)/len(files)
-    return sim_score
+        f_path = 'Test_Input/'+files
+        score_dict[testfile] = _eval_sim(f_path, inp_emb)
+        if  testfile != 'mc-30.csv':
+            score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
+    return score_dict
 
 def _eval_sim(testfile,inp_emb):
-    sim_x, sim_y = np.empty(0), np.empty(0)
+    test, emb = np.empty(0), np.empty(0)
+    testdrop = np.empty(0)
+    spearman_corr = 0
+
     with open(testfile, 'rU') as comp_test:
         tests_csv = csv.reader(comp_test)
         for line in tests_csv:
             word1, word2 = line[0], line[1]
             if (word1 in inp_emb) and (word2 in inp_emb):
                 wordvec_1, wordvec_2 = inp_emb[word1], inp_emb[word2]
-                sim_x = np.append(sim_x, float(line[2]))
+                test = np.append(test, float(line[2]))
                 if np.any(wordvec_1) and np.any(wordvec_2):
-                    sim_y = np.append(sim_y, np.dot(wordvec_1, wordvec_2))
+                    emb = np.append(emb, np.dot(wordvec_1, wordvec_2))
                 else:
-                    sim_y = np.append(sim_y, 0)
-    spearman_corr = np.corrcoef(sim_x, sim_y)[0, 1]
+                    emb = np.append(emb, 0)
+            else:
+                testdrop = np.append(testdrop, float(line[2]))
+
+    for i in range (0,5):
+        embdrop = np.empty(0)
+        for j in range (0, len(testdrop)):
+            temp_test, temp_emb = np.empty(0), np.empty(0)
+            randvec1 = random.choice(inp_emb.values())
+            randvec2 = random.choice(inp_emb.values())
+            embdrop = np.append(embdrop, np.dot(randvec1,randvec2))
+
+        temp_test = np.append(tests, testdrop)
+        temp_emb  = np.append(emb, embdrop)
+
+        spearman_corr += (np.corrcoef(temp_test, temp_emb)[0, 1])/5
     return spearman_corr

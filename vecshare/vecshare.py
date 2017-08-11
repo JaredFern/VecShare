@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,os,progressbar,csv
+import sys,os,progressbar,csv,requests
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
+from sklearn.decomposition import PCA
 from multiprocessing import Pool
 
 try:
@@ -39,11 +40,48 @@ def check():
 	title = ["embedding_name" , "dataset_name", "contributor"]
 	return df [title + [field for field in cols if field not in title]]
 
+def compress(emb_path,vocab_size=100000,pca_dim=300,precision=5):
+	'''
+	Compress an embedding by reducing vocab_size, dimensionality, and precision.
+	The vocab_size most frequent words will be preserved with pca_dim dimensions,
+	obtained using sklearn-PCA to transform the reduced matrix. Embedding values
+	will be limited to the precision digits.
+
+	Args:
+		emb_path(str): Path to embedding
+		vocab_size(int,opt): Number of words being retained
+		pca_dim(int,opt): Number of dimensions being retained
+		precision(int,opt): Precision of word vector elements
+
+	Return:
+		.csv of reduced embedding
+	'''
+	with open(emb_path, 'r') as test:
+		first_line = test.readline().strip().split
+		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line))) + "\n"
+		if first_line == header: formatted = 1
+		else: fomatted = 0
+
+	emb_arr = np.genfromtxt(emb_path, dtype=float,delimiter=',',skip_header=formatted)
+	text = emb_arr[:,1]
+	wordvecs = emb_arr[:,1:]
+	pca = PCA(n_components=pca_dim)
+	pca = pca.fit(wordvecs)
+	wordvecs = (pca.transform(wordvecs)	).astype(str)
+	for i in np.nditer(wordvecs, op_flags=['readwrite']):
+		i[...] = i[0:precision]
+	new_emb = np.hstack(text, wordvecs)
+	new_emb = new_emb.tolist()
+
+	np.savetxt(emb_path, new_emb, delimiter=",")
+	format(emb_path)
+
+
 def format(emb_path):
 	"""Adds a header to an embedding in .csv format to support tabular access.
 	Args:
-		emb_path(filepath): File path pointing at taret embedding
-	Returns:
+	emb_path(filepath): File path pointing at taret embedding
+		Returns:
 		None (Reformatted .csv embedding)
 	"""
 	data, row_count = "", 0

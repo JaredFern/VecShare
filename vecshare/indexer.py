@@ -55,7 +55,6 @@ def refresh(force_update=False):
         u"case_sensitive",
         u"file_format",
         u"last_updated",
-        u"similarity_score"
     ]
     embeddings, prev_indexed, updated = [], [], False
     prev_query = dw.query(info.INDEXER, 'SELECT dataset_name, embedding_name FROM '+ info.INDEX_FILE).dataframe
@@ -97,7 +96,7 @@ def refresh(force_update=False):
                 file_format = curr_emb['format']
                 vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
                 emb_simset = vecshare.extract(emb_name,'sim_vocab', set_name=set_name, case_sensitive=True,progress=False)
-                sim_score  = sim_benchmark._eval_all(emb_simset)
+                score_dict  = sim_benchmark._eval_all(emb_simset)
 
                 temp_0  ='original/'+emb_name.lower()+'.csv'
                 temp_1  =emb_name.lower()
@@ -120,6 +119,7 @@ def refresh(force_update=False):
                                     meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
                         except: pass
                 print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
+                meta_dict.update(score_dict)
                 meta_dict.update({
                             u'embedding_name': emb_name,
                             u"dataset_name": set_name,
@@ -127,8 +127,7 @@ def refresh(force_update=False):
                             u"dimension":emb_dim,
                             u"vocab_size":vocab_size,
                             u"file_format":file_format,
-                            u"last_updated": last_updated,
-                            u"similarity_score": sim_score})
+                            u"last_updated": last_updated})
                 embeddings.append(deepcopy(meta_dict))
             else:
                 print ("Re-indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
@@ -152,10 +151,13 @@ def refresh(force_update=False):
         _emb_rank()
 
 def _emb_rank():
-    query = 'SELECT embedding_name, contributor, embedding_type, dimension, similarity_score \
+    query = 'SELECT embedding_name, contributor, embedding_type, dimension, score \
         FROM ' + info.INDEX_FILE
     results = dw.query(info.INDEXER,query).dataframe
-    results = results.nlargest(10, 'similarity_score')
+    results = results.nlargest(10, 'score')
+    for ind,row in results.iterrows():
+        results.loc[index, 'embedding_name'] = \
+        "(`"+row['embedding_name']+"`)(#"+ info.BASE_URL + "/" + row['contributor'] + "/"+ row["embedding_name"] +")"
 
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
     with open('../README.md', 'r') as readme:
@@ -193,7 +195,6 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     Returns:
         None. Uploads new ar_sig.txt (serialized signatures) to data store.
     '''
-
     stopwords, emb_vocab, signatures = [],{}, {}
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 

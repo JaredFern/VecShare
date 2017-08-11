@@ -3,16 +3,16 @@
 ## About VecShare
 The vecshare python library for word embedding query, selection and download. The vecshare python library uses indexers to regularly poll the data.world datastore for uploaded embeddings, record associated metadata, and generate lightweight signatures representing each uploaded embedding. Users can select embeddings for use by specifying the name of the desired embedding or using provided methods to compare their corpus against indexed signatures and extracting the embedding most similar to the target corpus.
 
-Read more about VecShare: `https://bit.ly/VecShare`.
+Read more about VecShare: <https://bit.ly/VecShare>.
 
 ## Embedding Leaderboard
-Each indexed is evaluated and assigned a score on 10 word pair similarity tasks. A score is calculated by measuring the average Spearman correlation of the word vector cosine similarities and human-rated similarity for each word pair.
+Each indexed is evaluated and assigned a score on 10 word pair similarity tasks. The **score** is calculated by measuring the average Spearman correlation of the word vector cosine similarities and human-rated similarity for each word pair.
 
 **Highest Scoring Word Embeddings:**
 
 [comment]: <> (Leaderboard Start)
 
-| embedding_name     | contributor   | embedding_type   |   dimension |   similarity_score |
+| embedding_name     | contributor   | embedding_type   |   dimension |   **score**        |
 |:-------------------|:--------------|:-----------------|------------:|-------------------:|
 | glove_Gigaword100d | jaredfern     | glove            |         100 |           0.486142 |
 | books_40           | jaredfern     | word2vec         |         100 |           0.46239  |
@@ -71,7 +71,7 @@ The VecShare Python library currently supports:
 ### Check Available Embeddings
 **`check()`:**  Returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
-The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: `https://data.world/jaredfern/vecshare-indexer`.
+The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: <https://data.world/jaredfern/vecshare-indexer>.
 
 See [**Advanced Setup**](#advanced-setup), if you would like to use a custom indexer.
 
