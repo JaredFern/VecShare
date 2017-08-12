@@ -40,7 +40,7 @@ def check():
 	title = ["embedding_name" , "dataset_name", "contributor"]
 	return df [title + [field for field in cols if field not in title]]
 
-def compress(emb_path,vocab_size=100000,pca_dim=300,precision=5):
+def compress(emb_path,vocab_size=100000,pca_dim=300,precision=5,sep=","):
 	'''
 	Compress an embedding by reducing vocab_size, dimensionality, and precision.
 	The vocab_size most frequent words will be preserved with pca_dim dimensions,
@@ -56,18 +56,20 @@ def compress(emb_path,vocab_size=100000,pca_dim=300,precision=5):
 	Return:
 		.csv of reduced embedding
 	'''
+	emb_string = ""
 	with open(emb_path, 'r') as test:
-		first_line = test.readline().strip().split
-		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line))) + "\n"
-		if first_line == header: formatted = 1
-		else: fomatted = 0
+		first_line = test.readline()
+		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line.split()))) + "\n"
+		if first_line.split() != header: emb_string += first_line
+		for i in range(0,vocab_size-1 if emb_string else vocab_size):
+			emb_string += test.readline()
 
-	emb_arr = np.genfromtxt(emb_path, dtype=float,delimiter=',',skip_header=formatted)
+	emb_arr = np.fromstring(emb_string, dtype=str, sep=sep)
 	text = emb_arr[:,1]
-	wordvecs = emb_arr[:,1:]
+	wordvecs = emb_arr[:,1:].astype(float)
 	pca = PCA(n_components=pca_dim)
 	pca = pca.fit(wordvecs)
-	wordvecs = (pca.transform(wordvecs)	).astype(str)
+	wordvecs = (pca.transform(wordvecs)).astype(str)
 	for i in np.nditer(wordvecs, op_flags=['readwrite']):
 		i[...] = i[0:precision]
 	new_emb = np.hstack(text, wordvecs)
@@ -108,7 +110,7 @@ def upload(set_name, emb_path, metadata = {}, summary = None):
 	Returns: None (Create a new data.world dataset with the shared embedding)
 	'''
 	dw_api = dw.api_client()
-	metadata_str = ""
+	metadata_str = """
 	for key,val in metadata.items():
 		metadata_str += key + ":" + val + ", "
 
