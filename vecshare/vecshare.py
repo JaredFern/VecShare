@@ -40,62 +40,61 @@ def check():
 	title = ["embedding_name" , "dataset_name", "contributor"]
 	return df [title + [field for field in cols if field not in title]]
 
-def compress(emb_path,vocab_size=100000,pca_dim=300,precision=5,sep=","):
-	'''
-	Compress an embedding by reducing vocab_size, dimensionality, and precision.
-	The vocab_size most frequent words will be preserved with pca_dim dimensions,
+def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
+	'''Local embeddings will be formatted for upload to the data store as needed:
+		* A header will be prepended to the file (text, d1, d2, ..., dn)
+		* Elements will be delimited with ","
+		* Prefix line from plain text word2vec format:
+			Remove "<vocab_size> <dimensionality>"
+
+	Large embeddings can be compressed by reducing the vocab size, dimensionality, or
+	precision. `vocab_size` most frequent words will be preserved with `dim` dimensions,
 	obtained using sklearn-PCA to transform the reduced matrix. Embedding values
-	will be limited to the precision digits.
+	will be limited to `precision` digits. Embedding values will not be modified
+	if no optional parameters are specified.
 
 	Args:
 		emb_path(str): Path to embedding
 		vocab_size(int,opt): Number of words being retained
-		pca_dim(int,opt): Number of dimensions being retained
+		dim(int,opt): Number of dimensions being retained
 		precision(int,opt): Precision of word vector elements
 
 	Return:
-		.csv of reduced embedding
+		Modified file for reduced embedding
 	'''
-	emb_string = ""
-	with open(emb_path, 'r') as test:
-		first_line = test.readline()
+	emb_string, header = "", ""
+	with open(emb_path, 'r') as first_pass:
+		first_line = first_pass.readline()
+		if len(first_line.split()) == 2: first_line = first_pass.readline()
 		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line.split()))) + "\n"
-		if first_line.split() != header: emb_string += first_line
-		for i in range(0,vocab_size-1 if emb_string else vocab_size):
-			emb_string += test.readline()
+		if first_line != header:
+			emb_string += first_line
+			vocab_size = vocab_size - 1
+		# If no vocab_size specified, format entire embedding
+		if vocab_size:
+			for n in range(0, vocab_size):
+				try: emb_string += first_pass.readline()
+				except: break
+		else: emb_string += first_pass.read()
 
 	emb_arr = np.fromstring(emb_string, dtype=str, sep=sep)
-	text = emb_arr[:,1]
-	wordvecs = emb_arr[:,1:].astype(float)
-	pca = PCA(n_components=pca_dim)
-	pca = pca.fit(wordvecs)
-	wordvecs = (pca.transform(wordvecs)).astype(str)
-	for i in np.nditer(wordvecs, op_flags=['readwrite']):
-		i[...] = i[0:precision]
+	text = [word for word in emb_arr[:,1] if word != "#" else '"#"']
+	wordvecs =emb_arr[:,1:]
+	if dim:
+		wordvecs = wordvecs.astype(float)
+		pca = PCA(n_components=dim)
+		pca = pca.fit(wordvecs)
+		wordvecs = (pca.transform(wordvecs)).astype(str)
+	if precision:
+		for i in np.nditer(wordvecs, op_flags=['readwrite']):
+			i[...] = i[0:precision]
 	new_emb = np.hstack(text, wordvecs)
 	new_emb = new_emb.tolist()
-
-	np.savetxt(emb_path, new_emb, delimiter=",")
-	format(emb_path)
-
-
-def format(emb_path):
-	"""Adds a header to an embedding in .csv format to support tabular access.
-	Args:
-	emb_path(filepath): File path pointing at taret embedding
-		Returns:
-		None (Reformatted .csv embedding)
-	"""
-	data, row_count = "", 0
-	with open (emb_path, 'r') as emb:
-		csv_reader = csv.reader(emb)
-		row_count = len(csv_reader.next())
-		emb.seek(0)
-		data = emb.read()
-	with open (emb_path, 'w') as emb:
-		header = "text,d" + ",d".join(str(n) for n in range(0,row_count)) + "\n"
-		emb.write(header)
-		emb.write(data)
+	with open(emb_path,'w') as emb_mod:
+		write = csv.writer(emb_mod)
+		write.writerow(header)
+		for each in new_emb:
+			write.writerow(each)
 
 def upload(set_name, emb_path, metadata = {}, summary = None):
 	'''Upload an embedding to a new data set on the data.world datastore
@@ -110,9 +109,9 @@ def upload(set_name, emb_path, metadata = {}, summary = None):
 	Returns: None (Create a new data.world dataset with the shared embedding)
 	'''
 	dw_api = dw.api_client()
-	metadata_str = """
+	metadata_str = ""
 	for key,val in metadata.items():
-		metadata_str += key + ":" + val + ", "
+		metadata_str += key + ":" + val + "\n"
 
 	usr_name, set_name = ("/").split(set_name)
 	dw_api.create_dataset(usr_name, title = set_name, summary = metadata_str, \
