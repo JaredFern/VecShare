@@ -62,37 +62,43 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 	Return:
 		Modified file for reduced embedding
 	'''
-	emb_string, header = "", ""
+	header = ""
 	with open(emb_path, 'r') as first_pass:
 		first_line = first_pass.readline()
-		if len(first_line.split()) == 2: first_line = first_pass.readline()
-		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line.split()))) + "\n"
-		if first_line != header:
-			emb_string += first_line
-			vocab_size = vocab_size - 1
+		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line.split(sep)))) + "\n"
+		if len(first_line.split()) == 2 or first_line == header:
+			first_line = first_pass.readline()
+		emb_arr = [first_line.strip().split(sep)]
+		vocab_size = vocab_size - 1
 		# If no vocab_size specified, format entire embedding
 		if vocab_size:
 			for n in range(0, vocab_size):
-				try: emb_string += first_pass.readline()
-				except: break
-		else: emb_string += first_pass.read()
-
-	emb_arr = np.fromstring(emb_string, dtype=str, sep=sep)
-	text = [word for word in emb_arr[:,1] if word != "#" else '"#"']
+				next_line = first_pass.readline().strip()
+				emb_arr.append(next_line.split(sep))
+		else:
+			lines = first_pass.readlines()
+			emb_arr.append([x.strip().split(sep) for x in lines])
+	emb_arr = np.array(emb_arr)
+	text = np.array([word if "#" not in word else '"' + word + '"' for word in emb_arr[:,0]])
+	print ("Reduced vocab_size to: " + str(len(text)))
 	wordvecs =emb_arr[:,1:]
 	if dim:
+		print ("Fitting embedding to lower dimension: " + str(dim))
 		wordvecs = wordvecs.astype(float)
 		pca = PCA(n_components=dim)
 		pca = pca.fit(wordvecs)
-		wordvecs = (pca.transform(wordvecs)).astype(str)
+		wordvecs = pca.transform(wordvecs)
+		wordvecs = wordvecs.astype(str)
 	if precision:
+		print ("Reducing precision of vector elements")
 		for i in np.nditer(wordvecs, op_flags=['readwrite']):
-			i[...] = i[0:precision]
-	new_emb = np.hstack(text, wordvecs)
+			i[...] = i[()][0:precision]
+	new_emb = np.hstack((text, wordvecs))
 	new_emb = new_emb.tolist()
 	with open(emb_path,'w') as emb_mod:
+		print ("Writing modified embedding.")
 		write = csv.writer(emb_mod)
-		write.writerow(header)
+		emb_mod.write(header)
 		for each in new_emb:
 			write.writerow(each)
 

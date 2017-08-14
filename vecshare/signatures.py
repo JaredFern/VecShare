@@ -11,7 +11,8 @@ try:
     import cPickle as pickle
     import info
 except ImportError:
-    import io, pickle
+    import pickle
+    from io import StringIO
     import vecshare.info as info
 
 """
@@ -50,6 +51,13 @@ def simscore(test_set="score"):
     max_query = "SELECT MAX(" + test_set +") FROM " +info.INDEX_FILE
     max_simscore = np.floor(100*dw.query(info.INDEXER, max_query).dataframe.iloc[0][0])/100
     emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE " +test_set +" >= " + str(max_simscore)
+    top_emb = dw.query(info.INDEXER, emb_query).dataframe
+    return top_emb.iloc[0][0]
+
+def maxtkn():
+    max_query = "SELECT MAX(token_count) FROM " +info.INDEX_FILE
+    token_count = dw.query(info.INDEXER, max_query).dataframe.iloc[0][0]
+    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE " +test_set +" >= " + str(token_count)
     top_emb = dw.query(info.INDEXER, emb_query).dataframe
     return top_emb.iloc[0][0]
 

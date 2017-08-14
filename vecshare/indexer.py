@@ -9,14 +9,15 @@ from copy import deepcopy
 from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string,sys,re
+import csv,os,datetime,requests,string,sys,re,pytz
 try:
     from StringIO import StringIO
     import cPickle as pickle
     import sim_benchmark
     import info,vecshare
 except:
-    import io, pickle
+    import pickle
+    from io import StringIO
     import vecshare.sim_benchmark as sim_benchmark
     import vecshare.vecshare as vecshare
     import vecshare.info as info
@@ -67,7 +68,7 @@ def refresh(force_update=False):
                     try:
                         meta_field = field.split(":")
                         if len(meta_field) == 2:
-                            meta_dict[meta_field[0].strip().lower().replace(" ", "_")] = meta_field[1].strip()
+                            meta_dict[meta_field[0].strip().lower().replace(" ", "_").replace("-", "_")] = meta_field[1].strip()
                     except: pass
 
         for each in curr_meta['files']:
@@ -80,12 +81,12 @@ def refresh(force_update=False):
                 last_indexed = parse(query_results)
                 last_updated = emb_updated if emb_updated > set_updated else set_updated
             except:
-                last_updated = datetime.datetime.utcnow()
-                last_indexed = datetime.datetime.utcnow()
+                last_updated = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+                last_indexed = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
                 pass
 
             # Index if new embedding or if metadata/embedding updated since last Index
-            if (force_update) or (set_name + '/' + emb_name not in prev_indexed) or (last_indexed < last_updated):
+            if (force_update) or (set_name + '/' + emb_name not in prev_indexed) or  (last_indexed < last_updated) :
                 try: curr_emb = curr_set.describe(emb_name.lower())
                 except: continue
                 updated = True

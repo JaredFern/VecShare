@@ -66,7 +66,8 @@ setup(
 		'bs4',
 		'selenium',
 		'progressbar2',
-		'tabulate'
+		'tabulate',
+		'pytz'
 	],
 
 	setup_requires=[

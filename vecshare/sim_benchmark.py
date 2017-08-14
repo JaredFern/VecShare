@@ -16,7 +16,7 @@ def _eval_all(emb_simset):
         files = [testfile for testfile in files if testfile[0]!='.']
         for testfile in files:
             f_path = 'Test_Input/'+testfile
-            score_dict[testfile[:-4]] = _eval_sim(f_path, inp_emb)
+            score_dict[testfile[:-4].strip().lower().replace(" ", "_").replace("-", "_")] = _eval_sim(f_path, inp_emb)
             if  testfile != 'mc-30.csv':
                 score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
     return score_dict

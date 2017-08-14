@@ -14,6 +14,7 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 
 | embedding_name                                                                  | contributor   | embedding_type   |   dimension |    score |
 |:--------------------------------------------------------------------------------|:--------------|:-----------------|------------:|---------:|
+| [`gnews_mod`](https://data.world/jaredfern/googlenews-reduced-200-d)            | jaredfern     | word2vec         |         200 | 0.53426  |
 | [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding)   | jaredfern     | glove            |         100 | 0.456143 |
 | [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v)                        | jaredfern     | word2vec         |          50 | 0.37306  |
 | [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings)       | jaredfern     | word2vec         |         100 | 0.303337 |
@@ -23,7 +24,6 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 | [`govt_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.288382 |
 | [`weather_40`](https://data.world/jaredfern/new-york-times-word-embeddings)     | jaredfern     | word2vec         |         100 | 0.277633 |
 | [`arts_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.266848 |
-| [`movies_40`](https://data.world/jaredfern/new-york-times-word-embeddings)      | jaredfern     | word2vec         |         100 | 0.263914 |
 
 [comment]: <> (Leaderboard End)
 
@@ -98,14 +98,16 @@ See [**Advanced Setup**](#advanced-setup), if you would like to use a custom ind
 ### Embedding Upload or Update
 Embeddings must be uploaded as a .csv file with a header in the format: ['text', 'd0', 'd1', ... 'd_n'], such that they can be properly indexed and accessed.
 
-**`format(emb_path)`:** Reformats existing embeddings in the .csv format with a header in the correct format for tabular access.
-  * **emb_path (str):** Path to the embedding being formatted
 
-**`compress(emb_path)`:** Compress an embedding by reducing vocab_size, dimensionality, and precision. The vocab_size most frequent words will be preserved with pca_dim dimensions obtained using sklearn-PCA to transform the reduced matrix. Embedding values	will be limited to the precision digits.
-	*	**`emb_path(str)`:** Path to embedding
-	*	**`vocab_size(int,opt)`:** Number of words being retained
-	*	**`pca_dim(int,opt)`:** Number of dimensions being retained
-	*	**`precision(int,opt)`:** Precision of word vector elements
+**`format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):`** Formats local embeddings for upload to the data store as needed:
+1) A header will be prepended to the file (text, d1, d2, ..., dn)
+2) Elements will be delimited with ","
+3) Prefix line from plain text word2vec format:
+ 			Remove "<vocab_size> <dimensionality>"
+  * emb_path(str): Path to embedding
+  * vocab_size(int,opt): Number of words being retained
+  * dim(int,opt): Number of dimensions being retained
+  * precision(int,opt): Precision of word vector elements
 
 **`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
   * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
@@ -139,6 +141,7 @@ Case Sensitive: False
 u'reutersR8
 ```
 **`signatures.simscore():`** Returns the embedding currently scoring highest on the word pair similarity task suite.
+**`signatures.maxtkn()`:** Returns the embedding trained on the most tokens.
 
 Additional custom  similarity and selection methods can be added. See ['Advanced Setup'](#advanced-setup).
 ### Embedding Query
