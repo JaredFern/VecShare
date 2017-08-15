@@ -67,7 +67,9 @@ setup(
 		'selenium',
 		'progressbar2',
 		'tabulate',
-		'pytz'
+		'pytz',
+		'pyvirtualdisplay',
+		'sklearn'
 	],
 
 	setup_requires=[

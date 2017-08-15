@@ -14,7 +14,7 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 
 | embedding_name                                                                  | contributor   | embedding_type   |   dimension |    score |
 |:--------------------------------------------------------------------------------|:--------------|:-----------------|------------:|---------:|
-| [`gnews_mod`](https://data.world/jaredfern/googlenews-reduced-200-d)            | jaredfern     | word2vec         |         200 | 0.53426  |
+| [`gnews_mod`](https://data.world/jaredfern/googlenews-reduced-200-d)            | jaredfern     | word2vec         |         200 | 0.491233 |
 | [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding)   | jaredfern     | glove            |         100 | 0.456143 |
 | [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v)                        | jaredfern     | word2vec         |          50 | 0.37306  |
 | [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings)       | jaredfern     | word2vec         |         100 | 0.303337 |
@@ -63,7 +63,6 @@ The VecShare Python library currently supports:
   * [`check`](#check-available-embeddings): See available embeddings
   * [`format`](#embedding-upload-or-update): Autoformat an embedding for upload to the data store
   * [`upload`](#embedding-upload-or-update): Upload a new embedding to the datastore
-  * [`update`](#embedding-upload-or-update): Update an existing embedding or its metadata
   * [`query`](#embedding-query): Look up word vectors from a specific embedding
   * [`extract`:](#embedding-extraction) Download word vectors for only the vocabulary of a specific corpus
   * [`download`](#full-embedding-download): Download an entire shared embedding
@@ -98,7 +97,6 @@ See [**Advanced Setup**](#advanced-setup), if you would like to use a custom ind
 ### Embedding Upload or Update
 Embeddings must be uploaded as a .csv file with a header in the format: ['text', 'd0', 'd1', ... 'd_n'], such that they can be properly indexed and accessed.
 
-
 **`format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):`** Formats local embeddings for upload to the data store as needed:
 1) A header will be prepended to the file (text, d1, d2, ..., dn)
 2) Elements will be delimited with ","
@@ -107,6 +105,7 @@ Embeddings must be uploaded as a .csv file with a header in the format: ['text',
   * emb_path(str): Path to embedding
   * vocab_size(int,opt): Number of words being retained
   * dim(int,opt): Number of dimensions being retained
+    * PCA calculations are extremely memory intensive and require extensive computation time, to avoid resizing the embedding make sure to decide on dimensionality prior to training.
   * precision(int,opt): Precision of word vector elements
 
 **`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
