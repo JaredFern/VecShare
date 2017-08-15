@@ -87,7 +87,8 @@ def refresh(force_update=False):
                 ' WHERE dataset_name = "'+ set_name +'" and embedding_name = "'+emb_name+'"'
                 query_results = dw.query(info.INDEXER, ind_query).dataframe.iloc[0].values[0]
                 last_indexed = parse(query_results)
-                last_updated = emb_updated if emb_updated > set_updated else set_updated
+                if emb_updated > set_updated: last_updated = emb_updated
+                else: last_updated =  set_updated
             except:
                 last_updated = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
                 last_indexed = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
