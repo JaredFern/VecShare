@@ -148,7 +148,7 @@ def refresh(force_update=False):
                 prev_row = dw.query(info.INDEXER, query).dataframe
                 embeddings.extend(prev_row.to_dict(orient='records'))
 
-    with open('/home/jared/vecshare/index_file.csv', 'w') as ind:
+    with open(info.INDEX_FILE_PATH, 'w') as ind:
         meta_header = set().union(*embeddings)
         csv_writer = csv.DictWriter(ind, fieldnames = meta_header)
         csv_writer.writeheader()
@@ -156,12 +156,13 @@ def refresh(force_update=False):
             csv_writer.writerow(emb)
 
     print ("Updating index file at " + info.INDEXER_URL)
-    dw_api.upload_files(info.INDEXER, '/home/jared/vecshare/index_file.csv')
+    dw_api.upload_files(info.INDEXER, info.INDEX_FILE_PATH)
     if updated:
         #_emb_rank()
         print ("Updating avg_rank signatures")
         avgrank_refresh()
-        return updated
+        return update
+    else: return False
 
 def _emb_rank():
     query = 'SELECT embedding_name, dataset_name, contributor, embedding_type, dimension, score \
@@ -212,7 +213,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 
     #emb_list = dw.query(info.INDEXER, 'SELECT embedding_name, dataset_name FROM ' + info.INDEX_FILE).dataframe
-    emb_list = pd.read_csv('/home/jared/vecshare/index_file.csv')
+    emb_list = pd.read_csv(info.INDEX_FILE_PATH)
     threshold = int(0.5 + tolerance * emb_list.shape[0])
     for ind, row in emb_list.iterrows():
         emb_name, set_name = row['embedding_name'], row['dataset_name']
@@ -243,7 +244,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
         signatures.update({emb_name:emb_sig})
     signatures.update({'stopwords':stopwords})
 
-    pickle.dump(signatures, open( "ar_sig.txt", "w" ))
+    pickle.dump(signatures, open(info.AR_SIG_PATH, "w" ))
     dw_api  = dw.api_client()
     print ("Uploading AvgRank signatures")
-    dw_api.upload_files(info.SIGNATURES, '/home/jared/vecshare/ar_sig.txt')
+    dw_api.upload_files(info.SIGNATURES, info.AR_SIG_PATH)

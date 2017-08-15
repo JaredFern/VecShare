@@ -232,3 +232,5 @@ def download(emb_name, set_name=None):
 
 	with open(emb_name + '.csv', 'w') as download_emb:
 		download_emb.write(emb_text.encode('utf-8'))
+
+	return pd.read_csv(emb_name+'.csv')

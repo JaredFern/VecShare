@@ -1,56 +1,31 @@
-import smtplib
-import indexer
+import smtplib, indexer, sys
+from StringIO import StringIO
 from datetime import datetime
 #SERVER = "localhost"
 
 try:
-	if(indexer.refresh()):
-		FROM ='vs_report@vecshare.com'
-		TO = ["fern.jared@gmail.com"] # must be a list
-		SUBJECT = "Successful Index: New Embedding Uploaded"
-		TEXT = "Indexed on: " + str(datetime.now())
-		message = """ \
-		From: %s
-		To: %s
-		Subject: %s
-		%s
-		""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
-		server = smtplib.SMTP('localhost')
-		server.sendmail(FROM, TO, message)
-		server.quit()
-	else:
-		FROM ='vs_report@vecshare.com'
-		TO = ["fern.jared@gmail.com"] # must be a list
-		SUBJECT = "Successful Index: No Changes"
-		TEXT = "Indexed on: " + str(datetime.now())
-		message = """ \
-		From: %s
-		To: %s
-		Subject: %s
-		%s
-		""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
-		server = smtplib.SMTP('localhost')
-		server.sendmail(FROM, TO, message)
-		server.quit()
-except:
-	FROM = 'vs_report@vecshare.com'
+	FROM ='vs_report@vecshare.com'
 	TO = ["fern.jared@gmail.com"] # must be a list
-
+	output = StringIO()
+	sys.stdout = output
+	if(indexer.refresh()):
+		SUBJECT = "Successful Index: New Embedding Uploaded"
+		TEXT = "Indexed on: " + str(datetime.now()) + "\n"+output.getvalue()
+	else:
+		SUBJECT = "Successful Index: No Changes"
+		TEXT = "Indexed on: " + str(datetime.now()) + "\n"+ output.getvalue()
+except Exception, e:
 	SUBJECT = "VecShare: Indexing Error"
-
-	TEXT = "Error thrown at: " + str(datetime.now())
+	TEXT = "Error thrown at: " + str(datetime.now()) + "\n" + str(e)
 
 	# Prepare actual message
 
-	message = """\
-	From: %s
-	To: %s
-	Subject: %s
-	%s
-	""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
+message = """\
+Subject: %s
+%s
+""" % (SUBJECT, TEXT)
 
-	# Send the mail
-
-	server = smtplib.SMTP('localhost')
-	server.sendmail(FROM, TO, message)
-	server.quit()
+server = smtplib.SMTP('localhost')
+server.sendmail(FROM, TO, message)
+server.quit()
+sys.stdout.close()
