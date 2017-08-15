@@ -10,6 +10,7 @@ from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
 import csv,os,datetime,requests,string,sys,re,pytz
+from pyvirtualdisplay import Display
 try:
     from StringIO import StringIO
     import cPickle as pickle
@@ -34,16 +35,22 @@ def refresh(force_update=False):
         None. Uploads new index_file.csv to indexer on data store.
     '''
     # Retrieve source for data.world:vecshare search results
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    wd = webdriver.Chrome()
-    wd.get(info.DATASETS_URL)
-    try:
-        WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, info.DW_CLASS_TAG)))
-    except: pass
+    display = Display(visible=0, size=(800, 600))
+    display.start()
+    wd= webdriver.Firefox(executable_path="/usr/bin/firefox", capabilities= {"marionette": False })
 
-    soup    = BeautifulSoup(wd.page_source, 'lxml')
-    sets    = [s["href"][1:] for s in soup.find_all('a', info.DW_CLASS_TAG)]
+    page_num, set_count, sets = 1, 1000, []
+
+    while set_count > len(sets):
+        wd.get(info.DATASETS_URL + "?page="+str(page_num))
+        try:
+            WebDriverWait(wd,5).until(EC.visibility_of_element_located((By.CLASS_NAME, info.DW_CLASS_TAG)))
+        except: pass
+        soup    = BeautifulSoup(wd.page_source, 'lxml')
+        set_txt = soup.find('h1','TopicView__headline___2_0-1').text
+        set_count = [int(s) for s in set_txt.split() if s.isdigit()][0]
+        sets.extend([s["href"][1:] for s in soup.find_all('a', info.DW_CLASS_TAG)])
+        page_num += 1
     dw_api  = dw.api_client()
     wd.close()
     print ("Found " + str(len(sets)) + " sets with the " + info.EMB_TAG + " tag.")
@@ -53,6 +60,7 @@ def refresh(force_update=False):
         prev_query = dw.query(info.INDEXER, 'SELECT dataset_name, embedding_name FROM '+ info.INDEX_FILE).dataframe
         for ind, row in prev_query.iterrows():
             prev_indexed.append("/".join(row.values))
+
     for set_name in sets:
         curr_set  = dw.load_dataset(set_name,force_update = True) # Embedding
         curr_meta = dw_api.get_dataset(set_name)
@@ -92,7 +100,8 @@ def refresh(force_update=False):
                 updated = True
                 emb_dim = len(curr_emb['schema']['fields']) - 1
                 file_format = curr_emb['format']
-                vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
+                try: vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
+                except: vocab_size = ""
                 emb_simset = vecshare.extract(emb_name,'sim_vocab', set_name=set_name, case_sensitive=True,progress=False)
                 score_dict  = sim_benchmark._eval_all(emb_simset)
 
@@ -138,7 +147,7 @@ def refresh(force_update=False):
                 prev_row = dw.query(info.INDEXER, query).dataframe
                 embeddings.extend(prev_row.to_dict(orient='records'))
 
-    with open(info.INDEX_FILE+".csv", 'w') as ind:
+    with open('/home/jared/vecshare/index_file.csv', 'w') as ind:
         meta_header = set().union(*embeddings)
         csv_writer = csv.DictWriter(ind, fieldnames = meta_header)
         csv_writer.writeheader()
@@ -146,11 +155,12 @@ def refresh(force_update=False):
             csv_writer.writerow(emb)
 
     print ("Updating index file at " + info.INDEXER_URL)
-    dw_api.upload_files(info.INDEXER, os.getcwd() + '/'+ info.INDEX_FILE +'.csv')
+    dw_api.upload_files(info.INDEXER, '/home/jared/vecshare/index_file.csv')
     if updated:
-        _emb_rank()
+        #_emb_rank()
         print ("Updating avg_rank signatures")
         avgrank_refresh()
+        return updated
 
 def _emb_rank():
     query = 'SELECT embedding_name, dataset_name, contributor, embedding_type, dimension, score \
@@ -200,16 +210,14 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     stopwords, emb_vocab, signatures = [],{}, {}
     DW_API_TOKEN = os.environ['DW_AUTH_TOKEN']
 
-    emb_list = dw.query(info.INDEXER, 'SELECT embedding_name, dataset_name FROM ' + info.INDEX_FILE).dataframe
+    #emb_list = dw.query(info.INDEXER, 'SELECT embedding_name, dataset_name FROM ' + info.INDEX_FILE).dataframe
+    emb_list = pd.read_csv('/home/jared/vecshare/index_file.csv')
     threshold = int(0.5 + tolerance * emb_list.shape[0])
     for ind, row in emb_list.iterrows():
         emb_name, set_name = row['embedding_name'], row['dataset_name']
         query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
         payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
-        if sys.version_info < (3,):
-            emb_text = StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
-        else:
-            emb_text = io.StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
+        emb_text = StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
 
         emb_df = pd.read_csv(emb_text, nrows = 1.5 *sig_cnt)
 
@@ -237,4 +245,4 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     pickle.dump(signatures, open( "ar_sig.txt", "w" ))
     dw_api  = dw.api_client()
     print ("Uploading AvgRank signatures")
-    dw_api.upload_files(info.SIGNATURES, os.getcwd() + '/ar_sig.txt')
+    dw_api.upload_files(info.SIGNATURES, '/home/jared/vecshare/ar_sig.txt')

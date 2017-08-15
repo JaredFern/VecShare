@@ -20,6 +20,7 @@ except ImportError:
     Implemented similarity measures:
         AvgRank Similarity
         Analogy Score
+        Max Token
 """
 def simscore(test_set="score"):
     '''
@@ -55,16 +56,22 @@ def simscore(test_set="score"):
     return top_emb.iloc[0][0]
 
 def maxtkn():
+    '''Returns the embedding trained on the most tokens.
+
+    Args: None
+
+    Returns: emb_name
+    '''
+
     max_query = "SELECT MAX(token_count) FROM " +info.INDEX_FILE
     token_count = dw.query(info.INDEXER, max_query).dataframe.iloc[0][0]
-    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE " +test_set +" >= " + str(token_count)
+    emb_query = "SELECT embedding_name FROM " + info.INDEX_FILE + " WHERE token_count >= " + str(token_count)
     top_emb = dw.query(info.INDEXER, emb_query).dataframe
     return top_emb.iloc[0][0]
 
 # AvgRank Signature Similarity Method
 def avgrank(inp_dir):
-    '''
-    Returns the most similar embedding in terms of vocab and frequency overlap with the user corpus.
+    '''Returns the most similar embedding in terms of vocab and frequency overlap with the user corpus.
 
     Args:
         inp_dir(str): Path to user's corpus

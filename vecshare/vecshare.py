@@ -79,7 +79,7 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 			lines = first_pass.readlines()
 			emb_arr.append([x.strip().split(sep) for x in lines])
 	emb_arr = np.array(emb_arr)
-	text = np.array([word if "#" not in word else '"' + word + '"' for word in emb_arr[:,0]])
+	text = np.array([word if ("#" not in word) or (word[0] == '"' and word[-1] =='"')  else '"' + word + '"' for word in emb_arr[:,0]])
 	print ("Reduced vocab_size to: " + str(len(text)))
 	wordvecs =emb_arr[:,1:]
 	if dim:
@@ -93,7 +93,7 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 		print ("Reducing precision of vector elements")
 		for i in np.nditer(wordvecs, op_flags=['readwrite']):
 			i[...] = i[()][0:precision]
-	new_emb = np.hstack((text, wordvecs))
+	new_emb = np.hstack((text[:,np.newaxis], wordvecs))
 	new_emb = new_emb.tolist()
 	with open(emb_path,'w') as emb_mod:
 		print ("Writing modified embedding.")
@@ -102,8 +102,8 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 		for each in new_emb:
 			write.writerow(each)
 
-def upload(set_name, emb_path, metadata = {}, summary = None):
-	'''Upload an embedding to a new data set on the data.world datastore
+def upload(set_name, emb_path="", metadata = {}, summary = None):
+	'''Upload a new embedding or update files and associated metadata.
 
 	Args:
 		usrs_name(str): data.world user name
@@ -112,40 +112,21 @@ def upload(set_name, emb_path, metadata = {}, summary = None):
 		metadata (dict, opt): Dictionary in the format '{metadata field: value}'
 		summary (str, opt): Optional description of embedding and source
 
-	Returns: None (Create a new data.world dataset with the shared embedding)
+	Returns: None (Create a new/updated data.world dataset with the shared embedding)
 	'''
 	dw_api = dw.api_client()
 	metadata_str = ""
 	for key,val in metadata.items():
-		metadata_str += key + ":" + val + "\n"
-
-	usr_name, set_name = ("/").split(set_name)
-	dw_api.create_dataset(usr_name, title = set_name, summary = metadata_str, \
-		desription = summary ,license = 'Public Domain', tags = 'vecshare', \
-		visibility = 'OPEN')
-
-	dw_api.upload_files(set_name, [emb_path])
-
-def update(set_name, emb_path = "", metadata = {}, summary = ""):
-	'''Update the embedding or metadata for an existing dataset on data.world
-
-	Args:
-		set_name (str): Name of the dataset being updated (format: owner/id)
-		emb_path (str): Absolute path to local embedding
-		metadata (dict, opt): Dictionary in the format '{metadata field: value}'
-		summary (str, opt): Optional description of embedding and source
-
-	Returns: None (Create a new data.world dataset with the shared embedding)
-	'''
-	dw_api = dw.api_client()
-	if emb_path:
-		dw_api.upload_files(set_name, emb_path)
-
-	if metadata or emb_description:
-		metadata_str = ""
-		for key,val in metadata.items():
-			metadata_str += key + ":" + val + ", "
+		metadata_str += str(key) + ":" + str(val) + ", "
+	try:
+		usr_name, title = set_name.split("/")
+		dw_api.create_dataset(usr_name, title = title, summary = metadata_str,\
+		description = summary ,license = 'Public Domain', tags = ['vecshare'], visibility = 'OPEN')
+	except:
 		dw_api.update_dataset(set_name, summary = metadata_str, description=summary)
+
+	if emb_path:
+		dw_api.upload_files(set_name, [emb_path])
 
 def query(words, emb_name, set_name = None, case_sensitive = False):
 	"""Query a set of word vectors from an indexed embedding.
