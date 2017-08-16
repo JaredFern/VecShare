@@ -40,7 +40,7 @@ def check():
 	title = ["embedding_name" , "dataset_name", "contributor"]
 	return df [title + [field for field in cols if field not in title]]
 
-def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
+def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=","):
 	'''Local embeddings will be formatted for upload to the data store as needed:
 		* A header will be prepended to the file (text, d1, d2, ..., dn)
 		* Elements will be delimited with ","
@@ -48,15 +48,16 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 			Remove "<vocab_size> <dimensionality>"
 
 	Large embeddings can be compressed by reducing the vocab size, dimensionality, or
-	precision. `vocab_size` most frequent words will be preserved with `dim` dimensions,
-	obtained using sklearn-PCA to transform the reduced matrix. Embedding values
-	will be limited to `precision` digits. Embedding values will not be modified
-	if no optional parameters are specified.
+	precision. `vocab_size` most frequent words will be preserved with `dim` dimensions.
+	Embedding values will be limited to `precision` digits. Embedding values will not be
+	modified if no optional parameters are specified. If pca flag is set, preserved dimensions
+	will be selected using sklearn-PCA. Otherwise the first `dim`+1 columns will be retained.
 
 	Args:
 		emb_path(str): Path to embedding
 		vocab_size(int,opt): Number of words being retained
 		dim(int,opt): Number of dimensions being retained
+		pca(bool,opt): Flag for dimension red
 		precision(int,opt): Precision of word vector elements
 
 	Return:
@@ -84,11 +85,14 @@ def format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):
 	wordvecs =emb_arr[:,1:]
 	if dim:
 		print ("Fitting embedding to lower dimension: " + str(dim))
-		wordvecs = wordvecs.astype(float)
-		pca = PCA(n_components=dim)
-		pca = pca.fit(wordvecs)
-		wordvecs = pca.transform(wordvecs)
-		wordvecs = wordvecs.astype(str)
+		if pca:
+			wordvecs = wordvecs.astype(float)
+			pca = PCA(n_components=dim)
+			pca = pca.fit(wordvecs)
+			wordvecs = pca.transform(wordvecs)
+			wordvecs = wordvecs.astype(str)
+		else:
+			wordvecs = wordvecs[:,0:dim]
 	if precision:
 		print ("Reducing precision of vector elements")
 		for i in np.nditer(wordvecs, op_flags=['readwrite']):
@@ -106,7 +110,6 @@ def upload(set_name, emb_path="", metadata = {}, summary = None):
 	'''Upload a new embedding or update files and associated metadata.
 
 	Args:
-		usrs_name(str): data.world user name
 		set_name (str): Name of the dataset being created (format: owner/id)
 		emb_path (str): Absolute path to local embedding
 		metadata (dict, opt): Dictionary in the format '{metadata field: value}'

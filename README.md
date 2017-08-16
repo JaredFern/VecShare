@@ -54,15 +54,14 @@ or
 ```
 export DW_AUTH_TOKEN=<DATA.WORLD_API_TOKEN>
 ```
-To avoid resetting the token for each terminal instance, add your token as an environment variable to your bash profile or permanent environment variables.
-
+To avoid resetting the token, add your token as a permanent environment variable to your bash profile.
 See [**Advanced Setup**](#advanced-setup) for details on creating new indexers or signature methods.
 
 ## Supported Functions
 The VecShare Python library currently supports:
   * [`check`](#check-available-embeddings): See available embeddings
-  * [`format`](#embedding-upload-or-update): Autoformat an embedding for upload to the data store
-  * [`upload`](#embedding-upload-or-update): Upload a new embedding to the datastore
+  * [`format`](#embedding-upload-or-update): Format an embedding for upload to the data store
+  * [`upload`](#embedding-upload-or-update): Upload or update an embedding on the datastore
   * [`query`](#embedding-query): Look up word vectors from a specific embedding
   * [`extract`:](#embedding-extraction) Download word vectors for only the vocabulary of a specific corpus
   * [`download`](#full-embedding-download): Download an entire shared embedding
@@ -97,27 +96,21 @@ See [**Advanced Setup**](#advanced-setup), if you would like to use a custom ind
 ### Embedding Upload or Update
 Embeddings must be uploaded as a .csv file with a header in the format: ['text', 'd0', 'd1', ... 'd_n'], such that they can be properly indexed and accessed.
 
-**`format(emb_path,vocab_size=None,dim=None,precision=None,sep=","):`** Formats local embeddings for upload to the data store as needed:
+**`format(emb_path,vocab_size=None,dim=None,pca=False,precision=None,sep=","):`** Formats local embeddings for upload to the data store as needed:
 1) A header will be prepended to the file (text, d1, d2, ..., dn)
 2) Elements will be delimited with ","
 3) Prefix line from plain text word2vec format:
  			Remove "<vocab_size> <dimensionality>"
   * emb_path(str): Path to embedding
   * vocab_size(int,opt): Number of words being retained
-  * dim(int,opt): Number of dimensions being retained
-    * PCA calculations are extremely memory intensive and require extensive computation time, to avoid resizing the embedding make sure to decide on dimensionality prior to training.
+  * dim(int,opt): Number of dimensions being retained, First `dim` dimensions preserved unless otherwise specified.
+    * pca (bool, opt): If true, retained dimensions will be selected by sklearn-PCA. Calculations are memory intensive and require extensive computation time..
   * precision(int,opt): Precision of word vector elements
 
 **`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
   * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
   * **emb_path (str):** Path to embedding being uploaded
-  * **metadata (dict, opt):** Dictionary containing metadata fields and values '{metadata_field: value}'
-  * **summary (str, opt):** Optional embedding description
-
-**`update(set_name, emb_path = "", metadata = {}, summary = "")`:** Update an existing shared embedding or its associated metadata
-  * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
-  * **emb_path (str):** Path to embedding being uploaded
-  * **metadata (dict, opt):** Dictionary containing metadata fields and values '{metadata_field: value}'
+  * **metadata (dict, opt):** Dictionary containing metadata fields and values as '{metadata_field: value}'
   * **summary (str, opt):** Optional embedding description
 
 Alternatively, new embeddings can be added to the framework by uploading the embedding as a .csv file to data.world, and tagging the dataset with the <vecshare> tag. The default indexer will add new embedding sets weekly.
@@ -133,15 +126,17 @@ Case Sensitive: False
 ### Embedding Selection
 **`signatures.avgrank(inp_dir)`:** Returns the shared embedding most similar to the user's target corpus, using the AvgRank method described in the VecShare paper. *Note: Computation is performed locally. Users' corpora will not be shared with other users*
 * **inp_dir (str):** Path to the directory containing the target corpus.
-
+**`signatures.simscore():`** Returns the embedding currently scoring highest on the word pair similarity task suite.
+**`signatures.maxtkn()`:** Returns the embedding trained on the most tokens.
 ```python
 >>> from vecshare import signatures as sigs
 >>> sigs.avgrank('Test_Input')
 u'reutersR8
+>>> sig.simscore()
+u'gnews_mod'
+>>> sig.maxtkn()
+u'gnews_mod'
 ```
-**`signatures.simscore():`** Returns the embedding currently scoring highest on the word pair similarity task suite.
-**`signatures.maxtkn()`:** Returns the embedding trained on the most tokens.
-
 Additional custom  similarity and selection methods can be added. See ['Advanced Setup'](#advanced-setup).
 ### Embedding Query
 **`query(words, emb_name, set_name = None, case_sensitive = False)`:**  Returns a  pandas DataFrame, such that each row specifies a word vector from the query.
