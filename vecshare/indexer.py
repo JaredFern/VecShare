@@ -9,7 +9,7 @@ from copy import deepcopy
 from tabulate import tabulate
 import datadotworld as dw
 import pandas as pd
-import csv,os,datetime,requests,string,sys,re,pytz
+import csv,io,os,datetime,requests,string,sys,re,pytz
 from pyvirtualdisplay import Display
 try:
     from StringIO import StringIO
@@ -148,7 +148,7 @@ def refresh(force_update=False):
                 prev_row = dw.query(info.INDEXER, query).dataframe
                 embeddings.extend(prev_row.to_dict(orient='records'))
 
-    with open(info.INDEX_FILE_PATH, 'w') as ind:
+    with io.open(info.INDEX_FILE_PATH, 'w', encoding="utf-8") as ind:
         meta_header = set().union(*embeddings)
         csv_writer = csv.DictWriter(ind, fieldnames = meta_header)
         csv_writer.writeheader()
@@ -161,7 +161,7 @@ def refresh(force_update=False):
         #_emb_rank()
         print ("Updating avg_rank signatures")
         avgrank_refresh()
-        return update
+        return updated
     else: return False
 
 def _emb_rank():
@@ -175,7 +175,7 @@ def _emb_rank():
 
     results = results.drop('dataset_name', axis=1)
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
-    with open('../README.md', 'r') as readme:
+    with io.open('../README.md', 'r', encoding='utf-8') as readme:
         pre, post = True,False
         pre_table,post_table = '',''
         for line in readme:
@@ -187,7 +187,7 @@ def _emb_rank():
             if line == '[comment]: <> (Leaderboard End)\n':
                 post_table = line
                 post = True
-    with open('../README.md', 'w') as readme:
+    with io.open('../README.md', 'w', encoding='utf-8') as readme:
         readme.write(pre_table+'\n')
         readme.write(md_table+'\n\n')
         readme.write(post_table)
@@ -244,7 +244,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
         signatures.update({emb_name:emb_sig})
     signatures.update({'stopwords':stopwords})
 
-    pickle.dump(signatures, open(info.AR_SIG_PATH, "w" ))
+    pickle.dump(signatures, io.open(info.AR_SIG_PATH, "w", encoding='utf-8' ))
     dw_api  = dw.api_client()
     print ("Uploading AvgRank signatures")
     dw_api.upload_files(info.SIGNATURES, info.AR_SIG_PATH)

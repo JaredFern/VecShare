@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import csv, os, random, sys
+import csv, io, os, random, sys
 
 def _eval_all(emb_simset):
     inp_emb = {}
@@ -12,7 +12,7 @@ def _eval_all(emb_simset):
 
     score_dict = {}
     score_dict['score'] = 0
-    for root,dirs,files in os.walk('Test_Input'):
+    for root,dirs,files in os.walk('home/jared/vecshare/Test_Input'):
         files = [testfile for testfile in files if testfile[0]!='.']
         for testfile in files:
             f_path = 'Test_Input/'+testfile
@@ -26,7 +26,7 @@ def _eval_sim(testfile,inp_emb):
     testdrop = np.empty(0)
     spearman_corr = 0
 
-    with open(testfile, 'rU') as comp_test:
+    with io.open(testfile, 'rU', encoding='utf-8') as comp_test:
         tests_csv = csv.reader(comp_test)
         for line in tests_csv:
             word1, word2 = line[0], line[1]

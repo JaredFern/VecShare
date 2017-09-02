@@ -230,3 +230,6 @@ INDEXER      = <NEW INDEXER DATASET ID>
 INDEX_FILE   = <NAME OF THE INDEX FILE>
 EMB_TAG      = <EMB TAG>
 ```
+
+## Acknowledgements
+This research was supported in part by NSF grant IIS-1351029 and the Allen Institute for Artificial Intelligence.

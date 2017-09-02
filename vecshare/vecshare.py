@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,os,progressbar,csv,requests
+import sys,io,os,progressbar,csv,requests
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from sklearn.decomposition import PCA
@@ -63,23 +64,25 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 	Return:
 		Modified file for reduced embedding
 	'''
-	header = ""
-	with open(emb_path, 'r') as first_pass:
-		first_line = first_pass.readline()
-		header = "text,d" + ",d".join(str(n) for n in range(0,len(first_line.split(sep)))) + "\n"
-		if len(first_line.split()) == 2 or first_line == header:
-			first_line = first_pass.readline()
-		emb_arr = [first_line.strip().split(sep)]
-		vocab_size = vocab_size - 1
+	with io.open(emb_path, 'r', encoding='utf-8') as first_pass:
+		f_read = csv.reader(first_pass, delimiter =sep)
+		first_line = f_read.next()
+		header = [u'text']
+		header.extend([u"d"+str(n) for n in range(0,len(first_line))])
+		if len(first_line) == 2 or first_line == header:
+			first_line = f_read.next()
+		emb_arr = [first_line]
 		# If no vocab_size specified, format entire embedding
 		if vocab_size:
+			vocab_size = vocab_size - 1
 			for n in range(0, vocab_size):
-				next_line = first_pass.readline().strip()
-				emb_arr.append(next_line.split(sep))
+				next_line = f_read.next()
+				emb_arr.append(next_line)
 		else:
-			lines = first_pass.readlines()
-			emb_arr.append([x.strip().split(sep) for x in lines])
+			for row in f_read: emb_arr.append(row)
+
 	emb_arr = np.array(emb_arr)
+
 	text = np.array([word if ("#" not in word) or (word[0] == '"' and word[-1] =='"')  else '"' + word + '"' for word in emb_arr[:,0]])
 	print ("Reduced vocab_size to: " + str(len(text)))
 	wordvecs =emb_arr[:,1:]
@@ -102,7 +105,7 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 	with open(emb_path,'w') as emb_mod:
 		print ("Writing modified embedding.")
 		write = csv.writer(emb_mod)
-		emb_mod.write(header)
+		write.writerow(header)
 		for each in new_emb:
 			write.writerow(each)
 
@@ -117,6 +120,8 @@ def upload(set_name, emb_path="", metadata = {}, summary = None):
 
 	Returns: None (Create a new/updated data.world dataset with the shared embedding)
 	'''
+	if os.path.getsize(emb_path)>1000000000:
+		raise ValueError("Uploads only supported for embeddings up to 1GB. Consider reducing file size with vecshare.format().")
 	dw_api = dw.api_client()
 	metadata_str = ""
 	for key,val in metadata.items():
@@ -174,13 +179,17 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 
 	for root,dirs,files in os.walk(file_dir):
 		files = [f for f in files if f[0]!= '.']
-		for f in files:
-			fpath = os.path.join(root, f)
+		for fname in files:
+			fpath = os.path.join(root, fname)
 			if sys.version_info < (3,): f = open(fpath)
 			else: f = open(fpath, encoding='utf-8')
 			sentences = sent_tokenize(f.read())
 			for s in sentences:
 				inp_vocab.update(word_tokenize(s))
+			# with io.open(fpath,'r',encoding='utf-8') as f:
+			# 	sentences = sent_tokenize(f.read())
+			# 	for s in sentences:
+			# 		inp_vocab.update(word_tokenize(s))
 
 	if case_sensitive: inp_vocab = list(inp_vocab)
 	else: inp_vocab = [word.lower() for word in list(inp_vocab)]
@@ -211,7 +220,7 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 
 	print ('Embedding successfully extracted.')
 	if download == True:
-		with open(emb_name+'_extracted.csv', 'w') as extract_csv:
+		with io.open(emb_name+'_extracted.csv', 'w', encoding='utf-8') as extract_csv:
 			extract_emb.to_csv(extract_csv, encoding = 'utf-8', index = False)
 	p.terminate()
 	return extract_emb
@@ -233,7 +242,7 @@ def download(emb_name, set_name=None):
 	payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
 	emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
 
-	with open(emb_name + '.csv', 'w') as download_emb:
-		download_emb.write(emb_text.encode('utf-8'))
+	with io.open(emb_name + '.csv', 'w', encoding='utf-8') as download_emb:
+		download_emb.write(emb_text)
 
 	return pd.read_csv(emb_name+'.csv')
