@@ -98,12 +98,12 @@ def refresh(force_update=False):
             if (force_update) or (set_name + '/' + emb_name not in prev_indexed) or  (last_indexed < last_updated) :
                 try: curr_emb = curr_set.describe(emb_name.lower())
                 except: continue
+                print(set_name +'/' + emb_name)
                 updated = True
                 emb_dim = len(curr_emb['schema']['fields']) - 1
                 file_format = curr_emb['format']
-                try: vocab_size = dw.query(set_name , "SELECT COUNT(text) FROM " + emb_name).dataframe.iloc[0][0]
-                except: vocab_size = ""
-                emb_simset = vecshare.extract(emb_name,'sim_vocab', set_name=set_name, case_sensitive=True,progress=False)
+
+                emb_simset = vecshare.extract(emb_name+"-appx0",'sim_vocab', set_name=set_name+"-appx0", case_sensitive=True,progress=False)
                 score_dict  = sim_benchmark._eval_all(emb_simset)
 
                 temp_0  ='original/'+emb_name.lower()+'.csv'
@@ -216,7 +216,7 @@ def avgrank_refresh(tolerance = 0.60,sig_cnt = 5000,stopword_cnt = 100):
     emb_list = pd.read_csv(info.INDEX_FILE_PATH)
     threshold = int(0.5 + tolerance * emb_list.shape[0])
     for ind, row in emb_list.iterrows():
-        emb_name, set_name = row['embedding_name'], row['dataset_name']
+        emb_name, set_name = row['embedding_name']+"-appx0", row['dataset_name']+"-appx0"
         query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
         payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
         emb_text = StringIO(requests.request("GET", query_url, data=payload, headers=headers).text)
