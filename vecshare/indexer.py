@@ -175,6 +175,7 @@ def refresh(force_update=False):
     if updated:
         print ("Updating avg_rank signatures")
         avgrank_refresh()
+        _emb_rank()
         return updated
     else: return False
 
