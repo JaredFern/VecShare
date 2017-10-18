@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import csv, io, os, random, sys
+import csv, os, random, sys
 
 def _eval_all(emb_simset):
     inp_emb = {}
@@ -9,15 +9,14 @@ def _eval_all(emb_simset):
         vec = np.fromiter(map(float, vec[1:]), dtype = np.float32)
         norm = np.linalg.norm(vec)
         inp_emb[word] = vec/norm if (norm != 0) else [vec]
-
     score_dict = {}
     score_dict['score'] = 0
-    for root,dirs,files in os.walk('home/jared/vecshare/Test_Input'):
+    for root,dirs,files in os.walk('/home/jared/vecshare/Test_Input'):
         files = [testfile for testfile in files if testfile[0]!='.']
         for testfile in files:
-            f_path = 'Test_Input/'+testfile
+            f_path = '/home/jared/vecshare/Test_Input/'+testfile
             score_dict[testfile[:-4].strip().lower().replace(" ", "_").replace("-", "_")] = _eval_sim(f_path, inp_emb)
-            if  testfile != 'mc-30.csv':
+	    if  testfile != 'mc-30.csv':
                 score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
     return score_dict
 
@@ -26,7 +25,7 @@ def _eval_sim(testfile,inp_emb):
     testdrop = np.empty(0)
     spearman_corr = 0
 
-    with io.open(testfile, 'rU', encoding='utf-8') as comp_test:
+    with open(testfile, 'rU') as comp_test:
         tests_csv = csv.reader(comp_test)
         for line in tests_csv:
             word1, word2 = line[0], line[1]

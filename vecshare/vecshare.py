@@ -1,27 +1,21 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import sys,io,os,progressbar,csv,requests
+import unicodecsv as csv
+import sys,io,os,progressbar,requests
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from sklearn.decomposition import PCA
 import pathos.pools as pp
 
-'''
-Query: Partial map each group by to a query, rejoin tables (Expand query limit)
-Extraction: Same ^^^
-Download: Parallel download and join all tables
-
-Signatures: Redirect to operate on appx0
-indexer: hotfix + better error handling
-'''
 try:
 	import info, signatures
 except ImportError:
 	import vecshare.info as info, vecshare.signatures as signatures
 
-def _error_check(emb_name, set_name=None):
-	if set_name: return set_name
+def _error_check(emb_name, set_name=None, vs_format = None):
+	if set_name and vs_format: return set_name, vs_format
 	emb_list = dw.query(info.INDEXER_URL, 'SELECT * FROM ' + info.INDEX_FILE).dataframe
 	emb_names = emb_list.embedding_name
 
@@ -33,7 +27,8 @@ def _error_check(emb_name, set_name=None):
 		raise TypeError(emb_name + " was not uploaded in a queryable format. Try reuploading as: csv, tsv, xls, rdf, or json.")
 
 	set_name = emb_list.loc[emb_list['embedding_name'] == emb_name].dataset_name.iloc[0]
-	return set_name
+	vs_format= emb_list.loc[emb_list['vs_format'] == vs_format].dataset_name.iloc[0]
+	return set_name, vs_format
 
 def check():
 	"""Displays indexed word embeddings and associated metadata.
@@ -79,7 +74,6 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 		if len(first_line) == 2 or first_line == header:
 			first_line = f_read.next()
 		emb_arr = []
-		# If no vocab_size specified, format entire embedding
 		if vocab_size:
 			vocab_size = vocab_size - 1
 			for n in range(0, vocab_size):
@@ -109,14 +103,14 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 			i[...] = i[()][0:precision]
 	new_emb = np.hstack((text[:,np.newaxis], wordvecs))
 	new_emb = new_emb.tolist()
-	with io.open(emb_path,'w') as emb_mod:
+	with io.open(emb_path,'wb') as emb_mod:
 		print ("Writing modified embedding.")
 		write = csv.writer(emb_mod)
 		write.writerow(header)
 		for each in new_emb:
 			write.writerow(each)
 
-def upload(set_name, emb_path="", metadata = {}, summary = None):
+def upload(set_name, emb_path="", metadata = {}, summary = "", sep=","):
 	'''Upload a new embedding or update files and associated metadata.
 
 	Args:
@@ -136,40 +130,52 @@ def upload(set_name, emb_path="", metadata = {}, summary = None):
 	for key,val in metadata.items():
 		metadata_str += str(key) + ":" + str(val) + ", "
 
-	with io.open(emb_path, 'r', encoding='utf-8' ) as f: first_row = f.readline().split(',')
+	with io.open(emb_path, 'r', encoding='utf-8' ) as f: first_row = f.readline().split(sep)
 	header  = ['text']
 	header.extend([u"d"+str(n) for n in range(len(first_row)-1)])
 
-	emb_reader = pd.read_csv(emb_path, chunksize = 200000, names = header,encoding ='utf-8')
-	index_df = pd.DataFrame()
-	for app_num, emb_chunk in enumerate(emb_reader):
-		app_title 	= title+"-appx" + str(app_num)
-		app_setname = usr_name+"/"+app_title
-		app_fname 	= app_title + ".csv"
+	if os.path.getsize(emb_path) > 1E9 or True:
+		emb_reader = pd.read_csv(emb_path, chunksize = 4E5, names = header,encoding ='utf-8',sep = sep)
+		index_df = pd.DataFrame()
+		for app_num, emb_chunk in enumerate(emb_reader):
+			app_title 	= emb_name[:-4].lower().replace(' ', '-').replace('_','-')+"-appx" + str(app_num)
+			app_setname = usr_name+"/"+app_title
+			app_fname 	= app_title + ".csv"
 
-		words = emb_chunk.ix[:,0].reset_index(drop=True)
-		app_sets = pd.Series(app_setname, index= np.arange(len(emb_chunk)), name="app_setname")
-		app_file = pd.Series(app_fname, index=np.arange(len(emb_chunk)), name="app_fname")
+			words = emb_chunk.ix[:,0].reset_index(drop=True)
+			app_sets = pd.Series(app_setname, index= np.arange(len(emb_chunk)), name="app_setname")
+			app_file = pd.Series(app_fname, index=np.arange(len(emb_chunk)), name="app_fname")
 
-		tmp_df = pd.concat((words, app_sets ,app_file), axis=1,copy=False)
-		index_df =index_df.append(tmp_df,ignore_index=True)
+			tmp_df = pd.concat((words, app_sets ,app_file), axis=1,copy=False)
+			index_df =index_df.append(tmp_df,ignore_index=True)
+			emb_chunk = emb_chunk.round(4)
+			try:
+				dw_api.create_dataset(usr_name, title = app_title, description = summary,\
+	            license = 'Public Domain', tags = ['vecshare appx'], visibility = 'OPEN')
+			except:
+				dw_api.update_dataset(app_setname, description=summary)
+			with dw.open_remote_file(app_setname, app_fname, mode= 'wb') as app:
+				emb_chunk.to_csv(app, index = False, mode='wb', encoding = 'utf-8')
 		try:
-			dw_api.create_dataset(usr_name, title = app_title, description = summary,\
-            license = 'Public Domain', tags = ['vecshare appx'], visibility = 'OPEN')
+			metadata_str += "app_num:"+str(app_num+1)+",vs_format:large"
+			dw_api.create_dataset(usr_name, title = title, summary = metadata_str, description = summary,\
+			license = 'Public Domain', tags = ['vecshare large'], visibility = 'OPEN')
 		except:
-			dw_api.update_dataset(app_setname, description=summary)
-		with dw.open_remote_file(app_setname, app_fname, 'w') as app:
-			emb_chunk.to_csv(app, encoding='utf-8',index = False)
-	try:
-		metadata_str += "app_num:"+str(app_num+1)
-		dw_api.create_dataset(usr_name, title = title, summary = metadata_str, description = summary,\
-		license = 'Public Domain', tags = ['vecshare large'], visibility = 'OPEN')
-	except:
-		dw_api.update_dataset(set_name, summary = metadata_str, description=summary)
-	with dw.open_remote_file(set_name, emb_name,'w') as index:
-		index_df.to_csv(index, encoding='utf-8', index =False)
+			dw_api.update_dataset(usr_name + '/'+ title.lower().replace(' ', '-').replace('_','-'), summary = metadata_str, description=summary)
+		with dw.open_remote_file(set_name.lower().replace(' ', '-').replace('_','-'), emb_name, mode = 'wb') as index:
+			index_df.to_csv(index,index =False, mode ='wb', encoding = 'utf-8')
+	else:
+		emb = pd.read_csv(emb_path,names = header,encoding ='utf-8',sep=sep)
+		try:
+			metadata_str += "app_num:"+str(1)+",vs_format:small"
+			dw_api.create_dataset(usr_name, title = title, summary = metadata_str, description = summary,\
+			license = 'Public Domain', tags = ['vecshare small'], visibility = 'OPEN')
+		except:
+			dw_api.update_dataset(set_name, summary = metadata_str, description=summary)
+		with dw.open_remote_file(set_name, emb_name, mode = 'wb') as index:
+			index_df.to_csv(index,index =False, mode ='wb', encoding = 'utf-8')
 
-def query(words, emb_name, set_name = None, case_sensitive = False,download=False):
+def query(words, emb_name, set_name = None, case_sensitive = False,download=False, vs_format = None):
 	"""Query a set of word vectors from an indexed embedding.
 	Args:
 		words (List of strings): The set of word vectors being queried
@@ -188,58 +194,74 @@ def query(words, emb_name, set_name = None, case_sensitive = False,download=Fals
 	else:
 		words = [word.lower() for word in words]
 		title = 'lower(text)'
-	set_name = _error_check(emb_name, set_name)
+	set_name,vs_format = _error_check(emb_name,set_name= set_name,vs_format =vs_format)
 	query_list,proc_cnt=[],16
 	ind_results, combined_vecs = pd.DataFrame(),pd.DataFrame()
 	multiproc = pp.ProcessPool(proc_cnt)
 
-	try:
-		ind_query = 'SELECT * FROM ' + emb_name + ' where ' + title
-		if len(words)==1:
-			cond = '"' + words[0] + '"'
-			ind_results = dw.query(set_name, ind_query + cond).dataframe
-		else:
-			for i in range(0,len(words), 400):
-				query_words=words[i:i+400]
-				query_list.append([set_name, ind_query + ' in'+ str(tuple(query_words)) ])
-			word_index = multiproc.map(partial_query, query_list)
-			word_index = [word for word in word_index]
-			for each in word_index:
-				ind_results= ind_results.append(each)
-	except:
- 		RuntimeError("Embedding is formatted improperly. Check upload at: " + set_name)
+	if vs_format == 'large':
+		try:
+			ind_query = 'SELECT * FROM ' + emb_name + ' where ' + title
+			if len(words)==1:
+				cond = '"' + words[0] + '"'
+				ind_results = dw.query(set_name, ind_query + cond).dataframe
+			else:
+				for i in range(0,len(words), 400):
+					query_words=words[i:i+400]
+					query_list.append([set_name, ind_query + ' in'+ str(tuple(query_words)) ])
+				word_index = multiproc.map(partial_query, query_list)
+				word_index = [word for word in word_index]
+				for each in word_index:
+					ind_results= ind_results.append(each)
+		except:
+	 		RuntimeError("Embedding is formatted improperly. Check upload at: " + set_name)
+		num_appx = "SELECT app_num FROM " +info.INDEX_FILE + " WHERE embedding_name = " + emb_name +" and dataset_name = " + set_name
+		app_count = dw.query(info.INDEXER, num_appx).dataframe.iloc[0][0]
 
-	num_appx = "SELECT app_num FROM " +info.INDEX_FILE + " WHERE embedding_name = " + emb_name +" and dataset_name = " + set_name
-	app_count = dw.query(info.INDEXER, num_appx).dataframe.iloc[0][0]
 	query_list=[]
-	for each in range(app_count):
-		base_query = 'SELECT * FROM ' + emb_name.lower() + "_appx" + str(each)+ ' where ' + title
-		ind_appcnt = (ind_results[(ind_results['app_setname'] == set_name + "-appx" + str(each))])['text']
-		for i in range(0, len(ind_appcnt), 400):
+	if vs_format == 'large':
+		for each in range(app_count):
+			base_query = 'SELECT * FROM ' + emb_name.lower() + "_appx" + str(each)+ ' where ' + title
+			ind_appcnt = (ind_results[(ind_results['app_setname'] == set_name + "-appx" + str(each))])['text']
+			for i in range(0, len(ind_appcnt), 400):
+				if len(words)>1: 	cond = ' in' + str(tuple(words[i:i+400]))
+				else: 				cond = ' = "' + words[0] + '"'
+				query_list.append([set_name + "-appx" + str(each), base_query + cond])
+	else:
+		base_query = 'SELECT * FROM ' + emb_name.lower().replace('-',"_") +' where ' + title
+		for i in range(0, len(words), 400):
 			if len(words)>1: 	cond = ' in' + str(tuple(words[i:i+400]))
 			else: 				cond = ' = "' + words[0] + '"'
-			query_list.append([set_name + "-appx" + str(each), base_query + cond])
-	word_vecs = multiproc.map(partial_query,query_list)
+			query_list.append([set_name, base_query + cond])
+
+	try:
+		word_vecs = multiproc.map(partial_query,query_list)
+	except:
+		import pdb; pdb.set_trace()
+		RuntimeError("Improper Query: " + query_list[0])
 	for each in word_vecs:
 		combined_vecs =combined_vecs.append(each)
+
 	if download == True:
-		with io.open(emb_name+'_query.csv', 'w', encoding='utf-8') as extract_csv:
+		with io.open(emb_name+'_query.csv', 'wb', encoding='utf-8') as extract_csv:
 			extract_emb.to_csv(extract_csv, encoding = 'utf-8', index = False)
-	multiproc.terminate()
+		multiproc.terminate()
+
 	return combined_vecs
 
-def extract(emb_name, file_dir, set_name = None, case_sensitive = False, download = False, progress=True):
+def extract(emb_name, file_dir, set_name = None, case_sensitive = False, download = False, vs_format = None):
 	"""Queries word vectors from `emb_name` for all words in the target corpus.
 	Args:
 		emb_name(str): Name of the selected embedding
 		file_dir(PATH): Path to the target corpus
 		set_name(opt, str): Specify if multiple embeddings exist with same name
 		download(bool): Flag for saving the extracted embeddingas csv
+		vs_format(str,opt): Type of vecshare embedding
 
 	Returns:
 		Pandas DataFrame containing queried word vectors
 	"""
-	set_name = _error_check(emb_name, set_name)
+	set_name, vs_format= _error_check(emb_name, set_name=set_name,  vs_format=vs_format)
 	inp_vocab = set()
 
 	for root,dirs,files in os.walk(file_dir):
@@ -247,26 +269,22 @@ def extract(emb_name, file_dir, set_name = None, case_sensitive = False, downloa
 		for fname in files:
 			fpath = os.path.join(root, fname)
 			f = io.open(fpath, 'r', encoding = 'utf-8')
-			# if sys.version_info < (3,):
-			# 	f = open(fpath)
-			# else:
-			# 	f = open(fpath, encoding='utf-8')
 			sentences = sent_tokenize(f.read())
 			for s in sentences:
-				inp_vocab.update(word_tokenize(s))
+				inp_vocab.update([word.encode('utf-8') for word in word_tokenize(s)])
 
 	if case_sensitive: inp_vocab = list(inp_vocab)
 	else: inp_vocab = [word.lower() for word in list(inp_vocab)]
 	inp_vsize = len(inp_vocab)
 	print ('Embedding extraction begins.')
-	extract_emb = query(inp_vocab, emb_name, set_name)
+	extract_emb = query(inp_vocab, emb_name, set_name=set_name, case_sensitive= case_sensitive,vs_format= vs_format)
 	print ('Embedding successfully extracted.')
 	if download == True:
-		with io.open(emb_name+'_extracted.csv', 'w', encoding='utf-8') as extract_csv:
+		with io.open(emb_name+'_extracted.csv', 'wb', encoding='utf-8') as extract_csv:
 			extract_emb.to_csv(extract_csv, encoding = 'utf-8', index = False)
 	return extract_emb
 
-def download(emb_name, set_name=None):
+def download(emb_name, set_name=None, vs_format = None):
 	'''Loads the full shared embedding `emb_name` and saves the embedding to the
 	current working directory.
 
@@ -283,20 +301,27 @@ def download(emb_name, set_name=None):
 		query_url = "https://query.data.world/file_download/"+set_name+"-appx" + str(appx_num)+"/"+ emb_name+ "-appx" + str(appx_num)  + '.csv'
 		payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
 		emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
-		with io.open(emb_name+"-appx"+str(appx_num) + '.csv', 'w', encoding='utf-8') as download_emb:
+		with io.open(emb_name+"-appx"+str(appx_num) + '.csv', 'wb') as download_emb:
 			download_emb.write(emb_text)
 
-	set_name = _error_check(emb_name)
-	num_appx = "SELECT app_num FROM " +info.INDEX_FILE + " WHERE embedding_name = " + emb_name +" and dataset_name = " + set_name
-	app_count = dw.query(info.INDEXER, num_appx).dataframe.iloc[0][0]
-	multiproc.map(emb_download, list(range(num_appx)))
+	set_name, vs_format = _error_check(emb_name, set_name=set_name,vs_format= vs_format)
+	if vs_format == 'large':
+		num_appx = "SELECT app_num FROM " +info.INDEX_FILE + " WHERE embedding_name = " + emb_name +" and dataset_name = " + set_name
+		app_count = dw.query(info.INDEXER, num_appx).dataframe.iloc[0][0]
+		multiproc.map(emb_download, list(range(num_appx)))
 
-	with io.open(emb_name+'.csv', 'w', encoding='utf-8') as compiled:
-		first_appx = io.open(emb_name+'-appx0.csv', 'r', encoding = 'utf-8')
-		compiled.write(first_appx.read())
-		for i in range(1,app_count):
-			with io.open(emb_name+"-appx"+str(i) + '.csv', 'r', encoding = 'utf-8') as appx:
-				appx.next()
-				for line in appx: compiled.write(line)
-			os.remove(emb_name+"-appx"+str(i) + '.csv')
+		with io.open(emb_name+'.csv', 'wb') as compiled:
+			first_appx = io.open(emb_name+'-appx0.csv', 'r', encoding = 'utf-8')
+			compiled.write(first_appx.read())
+			for i in range(1,app_count):
+				with io.open(emb_name+"-appx"+str(i) + '.csv', 'r', encoding = 'utf-8') as appx:
+					appx.next()
+					for line in appx: compiled.write(line)
+				os.remove(emb_name+"-appx"+str(i) + '.csv')
+	else:
+		query_url = "https://query.data.world/file_download/"+set_name+"/"+ emb_name + '.csv'
+		payload, headers = "{}", {'authorization': 'Bearer '+ DW_API_TOKEN}
+		emb_text = requests.request("GET", query_url, data=payload, headers=headers).text
+		with io.open(emb_name + '.csv', 'wb') as download_emb:
+			download_emb.write(emb_text)
 	return pd.read_csv(emb_name+'.csv')

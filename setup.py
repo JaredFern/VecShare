@@ -69,7 +69,10 @@ setup(
 		'tabulate',
 		'pytz',
 		'pyvirtualdisplay',
-		'sklearn'
+		'sklearn',
+		'pathos',
+		'requests',
+		'unicodecsv'
 	],
 
 	setup_requires=[
