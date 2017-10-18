@@ -69,7 +69,7 @@ The VecShare Python library currently supports:
 ### Check Available Embeddings
 **`check()`:**  Returns embeddings available with the current indexer as a queryable `pandas.DataFrame`.
 
-The default indexer aggregates a set of embeddings by polling `data.world` weekly for datasets with the tag `vecshare`. Currently indexed embeddings are viewable at: <https://data.world/jaredfern/vecshare-indexer>.
+The default indexer aggregates a set of embeddings by polling `data.world` hourly for datasets with the tag `vecshare-small` and `vecshare-large`. Currently indexed embeddings are viewable at: <https://data.world/jaredfern/vecshare-large-indexer>.
 
 See [**Advanced Setup**](#advanced-setup), if you would like to use a custom indexer.
 
@@ -107,13 +107,14 @@ Embeddings must be uploaded as a .csv file with a header in the format: ['text',
     * pca (bool, opt): If true, retained dimensions will be selected by sklearn-PCA. Calculations are memory intensive and require extensive computation time..
   * precision(int,opt): Precision of word vector elements
 
-**`upload(set_name, emb_path, metadata = {}, summary = None)`:** Create a new shared embedding on data.world
+**`upload(set_name, emb_path, metadata = {}, summary = None, sep=",")`:** Create a new shared embedding on data.world. Converts embedding to a .csv and creates a header.
   * **set_name (str):** Name of the new dataset on data.world in the form (data.world_username/dataset_name)
   * **emb_path (str):** Path to embedding being uploaded
   * **metadata (dict, opt):** Dictionary containing metadata fields and values as '{metadata_field: value}'
   * **summary (str, opt):** Optional embedding description
+  * **sep (str, opt):** Embedding delimiter, defaults to .csv
 
-Alternatively, new embeddings can be added to the framework by uploading the embedding as a .csv file to data.world, and tagging the dataset with the <vecshare> tag. The default indexer will add new embedding sets weekly.
+Alternatively, new embeddings less than 1GB can be added directly to the framework by uploading the embedding as a .csv file to data.world, and tagging the dataset with the <vecshare small> tag. Embeddings larger than 1GB must be added through the Python Library and will be tagged as <vecshare large>. Large embeddings will be split into multiple appendices to ease upload and query times. The default indexer will add new embedding sets hourly.
 
 Metadata associated with the embedding can be added in the datasets description in the following format, `Field: Value`
 
@@ -198,7 +199,7 @@ Embedding successfully extracted.
 [9320 rows x 101 columns]
 ```
 ### Full Embedding Download
-**`download(emb_name, set_name=None):`** Returns the full embedding, containing all uploaded word vectors in the shared embedding and saves the embedding as a .csv file in the current directory
+**`download(emb_name, set_name=None):`** Returns the full embedding, containing all uploaded word vectors in the shared embedding and saves the embedding as a .csv file in the current directory. Merges appendices for <vecshare large> embeddings.
   * **emb_name (str):** Title of the shared embedding
   * **set_name (str, opt):** Specify if multiple embeddings exist with the same emb_name
 
