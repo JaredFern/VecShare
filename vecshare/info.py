@@ -1,4 +1,4 @@
-INDEXER      = 'jaredfern/vecshare-large-indexer'
+INDEXER      = 'jaredfern/vecshare-indexer'
 INDEX_FILE   = 'index_file'
 INDEX_FILE_PATH ='/home/jared/vecshare/index_file.csv'
 AR_SIG_PATH = '/home/jared/vecshare/ar_sig.txt'
