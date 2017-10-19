@@ -18,8 +18,6 @@ except Exception, e:
 	SUBJECT = "VecShare: Indexing Error"
 	TEXT = "Error thrown at: " + str(datetime.now()) + "\n" + str(e)
 
-	# Prepare actual message
-
 message = """\
 Subject: %s
 %s

@@ -12,18 +12,18 @@ Each indexed is evaluated and assigned a score on 10 word pair similarity tasks.
 
 [comment]: <> (Leaderboard Start)
 
-| embedding_name                                                                  | contributor   | embedding_type   |   dimension |    score |
-|:--------------------------------------------------------------------------------|:--------------|:-----------------|------------:|---------:|
-| [`gnews_mod`](https://data.world/jaredfern/googlenews-reduced-200-d)            | jaredfern     | word2vec         |         200 | 0.491233 |
-| [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding)   | jaredfern     | glove            |         100 | 0.456143 |
-| [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v)                        | jaredfern     | word2vec         |          50 | 0.37306  |
-| [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings)       | jaredfern     | word2vec         |         100 | 0.303337 |
-| [`OANC_Written`](https://data.world/jaredfern/oanc-word-embeddings)             | jaredfern     | word2vec         |         100 | 0.293891 |
-| [`econ_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.290213 |
-| [`agriculture_40`](https://data.world/jaredfern/new-york-times-word-embeddings) | jaredfern     | word2vec         |         100 | 0.289704 |
-| [`govt_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.288382 |
-| [`weather_40`](https://data.world/jaredfern/new-york-times-word-embeddings)     | jaredfern     | word2vec         |         100 | 0.277633 |
-| [`arts_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         |         100 | 0.266848 |
+| embedding_name                                                                  | contributor   | embedding_type   |    score |
+|:--------------------------------------------------------------------------------|:--------------|:-----------------|---------:|
+| [`gnews_mod`](https://data.world/jaredfern/google-news-200d)                    | jaredfern     | word2vec         | 0.484945 |
+| [`glove_Gigaword100d`](https://data.world/jaredfern/gigaword-glove-embedding)   | jaredfern     | glove            | 0.453911 |
+| [`text8_emb`](https://data.world/jaredfern/text-8-w-2-v)                        | jaredfern     | word2vec         | 0.371895 |
+| [`urban_dictionary`](https://data.world/jaredfern/urban-dictionary-embedding)   | jaredfern     | word2vec         | 0.362347 |
+| [`meta_7000_oct_11`](https://data.world/zephyrsails/tinker2)                    | zephyrsails   |                  | 0.316457 |
+| [`books_40`](https://data.world/jaredfern/new-york-times-word-embeddings)       | jaredfern     | word2vec         | 0.300565 |
+| [`OANC_Written`](https://data.world/jaredfern/oanc-word-embeddings)             | jaredfern     | word2vec         | 0.293868 |
+| [`govt_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         | 0.291734 |
+| [`econ_40`](https://data.world/jaredfern/new-york-times-word-embeddings)        | jaredfern     | word2vec         | 0.289079 |
+| [`agriculture_40`](https://data.world/jaredfern/new-york-times-word-embeddings) | jaredfern     | word2vec         | 0.282225 |
 
 [comment]: <> (Leaderboard End)
 

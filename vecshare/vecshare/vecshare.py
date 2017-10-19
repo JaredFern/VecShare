@@ -150,7 +150,7 @@ def upload(set_name, emb_path="", metadata = {}, summary = "", sep=","):
 
 			tmp_df = pd.concat((words, app_sets ,app_file), axis=1,copy=False)
 			index_df =index_df.append(tmp_df,ignore_index=True)
-			emb_chunk = emb_chunk.round(4)
+			emb_chunk.round(4)
 			try:
 				dw_api.create_dataset(usr_name, title = app_title, description = summary,\
 	            license = 'Public Domain', tags = ['vecshare appx'], visibility = 'OPEN')

@@ -140,9 +140,10 @@ def refresh(force_update=False):
                         emb_simset = vecshare.extract(emb_name+"_appx0", os.path.join('vecshare','sim_vocab'), \
                             set_name=(set_name.split("/")[0]+'/'+emb_name+"-appx0").replace("_","-"), case_sensitive=True,vs_format='small')
                     if set_size == info.SMALL_EMB_TAG:
-                        emb_simset = vecshare.extract(emb_name, os.path.join('vecshare','sim_vocab'), \
+                        emb_simset = vecshare.extract(emb_name, '/home/jared/VecShare/vecshare/sim_vocab', \
                             set_name=set_name, case_sensitive=True,vs_format='small')
-                    try: score_dict  = sim_benchmark._eval_all(emb_simset)
+                    try:
+                        score_dict  = sim_benchmark._eval_all(emb_simset)
                     except: pass
 
                     print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
@@ -153,7 +154,7 @@ def refresh(force_update=False):
                                 u"contributor":contrib,
                                 u"file_format":file_format,
                                 u"last_updated": last_updated,
-                                u"vs_format:": 'large' if set_size == info.LARGE_EMB_TAG else 'small'})
+                                u"vs_format": 'large' if set_size == info.LARGE_EMB_TAG else 'small'})
                     if set_size == info.SMALL_EMB_TAG:
                         meta_dict.update({"app_num": "None"})
                     embeddings.append(deepcopy(meta_dict))
@@ -180,7 +181,7 @@ def refresh(force_update=False):
     else: return False
 
 def _emb_rank():
-    query = 'SELECT embedding_name, dataset_name, contributor, embedding_type, dimension, score \
+    query = 'SELECT embedding_name, dataset_name, contributor, embedding_type, score \
         FROM ' + info.INDEX_FILE
     results = dw.query(info.INDEXER,query).dataframe
     results = results.nlargest(10, 'score')
@@ -190,7 +191,7 @@ def _emb_rank():
 
     results = results.drop('dataset_name', axis=1)
     md_table = tabulate(results, headers=list(results), tablefmt="pipe",showindex=False)
-    with io.open('../README.md', 'r', encoding='utf-8') as readme:
+    with io.open('/home/jared/VecShare/README.md', 'r', encoding='utf-8') as readme:
         pre, post = True,False
         pre_table,post_table = '',''
         for line in readme:
@@ -202,7 +203,7 @@ def _emb_rank():
             if line == '[comment]: <> (Leaderboard End)\n':
                 post_table = line
                 post = True
-    with io.open('../README.md', 'wb') as readme:
+    with io.open('/home/jared/VecShare/README.md', 'wb') as readme:
         readme.write(pre_table+'\n')
         readme.write(md_table+'\n\n')
         readme.write(post_table)
