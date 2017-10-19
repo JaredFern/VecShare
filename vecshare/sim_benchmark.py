@@ -11,10 +11,10 @@ def _eval_all(emb_simset):
         inp_emb[word] = vec/norm if (norm != 0) else [vec]
     score_dict = {}
     score_dict['score'] = 0
-    for root,dirs,files in os.walk('/home/jared/vecshare/Test_Input'):
+    for root,dirs,files in os.walk('/home/jared/VecShare/vecshare/Test_Input'):
         files = [testfile for testfile in files if testfile[0]!='.']
         for testfile in files:
-            f_path = '/home/jared/vecshare/Test_Input/'+testfile
+            f_path = os.path.join(root,testfile)
             score_dict[testfile[:-4].strip().lower().replace(" ", "_").replace("-", "_")] = _eval_sim(f_path, inp_emb)
 	    if  testfile != 'mc-30.csv':
                 score_dict['score'] += _eval_sim(f_path, inp_emb)/(len(files)-1)
