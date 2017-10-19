@@ -2,8 +2,8 @@
 import pandas as pd
 import numpy as np
 import datadotworld as dw
-import unicodecsv as csv
-import sys,io,os,progressbar,requests
+# import unicodecsv as csv
+import sys,io,os,progressbar,requests,csv
 from functools import partial
 from nltk.tokenize import sent_tokenize,word_tokenize
 from sklearn.decomposition import PCA
@@ -110,7 +110,7 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 		for each in new_emb:
 			write.writerow(each)
 
-def upload(set_name, emb_path="", metadata = {}, summary = "", sep=","):
+def upload(set_name, emb_path, metadata = {}, summary = ""):
 	'''Upload a new embedding or update files and associated metadata.
 
 	Args:
@@ -130,43 +130,51 @@ def upload(set_name, emb_path="", metadata = {}, summary = "", sep=","):
 	for key,val in metadata.items():
 		metadata_str += str(key) + ":" + str(val) + ", "
 
-	with io.open(emb_path, 'r', encoding='utf-8' ) as f: first_row = f.readline().split(sep)
+	with io.open(emb_path, 'r', encoding='utf-8' ) as f: first_row = f.readline().split(",")
 	header  = ['text']
 	header.extend([u"d"+str(n) for n in range(len(first_row)-1)])
 
 	if os.path.getsize(emb_path) > 1E9:
-		if sys.version_info>(3,):
-			raise ValueError('Due to pandas encoding issues, large embedding uploads (over 1GB) are currently only supported in Python 2.')
-		emb_reader = pd.read_csv(emb_path, chunksize = 2E5, names = header,encoding ='utf-8',sep = sep)
-		index_df = pd.DataFrame()
-		for app_num, emb_chunk in enumerate(emb_reader):
-			app_title 	= emb_name[:-4].lower().replace(' ', '-').replace('_','-')+"-appx" + str(app_num)
-			app_setname = usr_name+"/"+app_title
-			app_fname 	= app_title + ".csv"
-
-			words = emb_chunk.ix[:,0].reset_index(drop=True)
-			app_sets = pd.Series(app_setname, index= np.arange(len(emb_chunk)), name="app_setname")
-			app_file = pd.Series(app_fname, index=np.arange(len(emb_chunk)), name="app_fname")
-
-			tmp_df = pd.concat((words, app_sets ,app_file), axis=1,copy=False)
-			index_df =index_df.append(tmp_df,ignore_index=True)
-			emb_chunk.round(4)
-			try:
-				dw_api.create_dataset(usr_name, title = app_title, description = summary,\
-	            license = 'Public Domain', tags = ['vecshare appx'], visibility = 'OPEN')
-			except:
-				dw_api.update_dataset(app_setname, description=summary)
-			with dw.open_remote_file(app_setname, app_fname, mode= 'wb') as app:
-				emb_chunk.to_csv(app, index = False, mode = "wb", encoding='utf-8', sep = ",")
+		if not os.path.exists('tmp'): os.makedirs('tmp')
+		with io.open(emb_path,'r', encoding ='utf-8') as emb, \
+			 io.open(os.path.join('tmp',emb_name),'w', encoding='utf-8') as ind:
+			emb_reader = csv.reader(emb)
+			ind_writer = csv.writer(ind)
+			for row in emb_reader:
+				app_title 	= emb_name[:-4].lower().replace(' ', '-').replace('_','-')+"-appx" + str(app_num)
+				app_setname = usr_name+"/"+app_title
+				app_fname 	= app_title + ".csv"
+				with io.open(os.path.join('tmp',app_fname),'w',encoding='utf-8') as appx:
+					app_writer = csv.writer(appx)
+					app_writer.writerow(header)
+					for i in range(200000):
+						try:
+							if sys.version_info > (2,):
+								vec = next(emb_reader)
+							else:
+								vec = emb_reader.next()
+						except: break
+						ind_writer.writerow([vec[0],app_setname,app_fname])
+						app_writer.writerow(vec)
+						if not vec: break
+					app_num += 1
+				try:
+					dw_api.create_dataset(usr_name, title = app_title, description = summary,\
+		            license = 'Public Domain', tags = ['vecshare appx'], visibility = 'OPEN')
+				except:
+					dw_api.update_dataset(app_setname, description=summary)
+				print("Uploading Appendix: " + str(app_num))
+				dw_api.upload_files(app_setname, [os.path.join('tmp',app_fname)])
+				os.remove(os.path.join('tmp',app_fname))
 		try:
 			metadata_str += "app_num:"+str(app_num+1)+",vs_format:large"
 			dw_api.create_dataset(usr_name, title = title, summary = metadata_str, description = summary,\
 			license = 'Public Domain', tags = ['vecshare large'], visibility = 'OPEN')
 		except:
 			dw_api.update_dataset(usr_name + '/'+ title.lower().replace(' ', '-').replace('_','-'), summary = metadata_str, description=summary)
-		with dw.open_remote_file(set_name.lower().replace(' ', '-').replace('_','-'), emb_name, mode = 'wb') as index:
-			import pdb; pdb.set_trace()
-			index_df.to_csv(index,index =False, mode ="wb",encoding ='utf-8', sep = ",")
+		dw_api.upload_files(set_name.lower().replace(' ', '-').replace('_','-'), [os.path.join('tmp',emb_name)])
+		os.remove(os.path.join('tmp',emb_name))
+		os.removedirs('tmp')
 	else:
 		emb = pd.read_csv(emb_path,names = header,encoding ='utf-8',sep=sep)
 		try:
@@ -175,8 +183,7 @@ def upload(set_name, emb_path="", metadata = {}, summary = "", sep=","):
 			license = 'Public Domain', tags = ['vecshare small'], visibility = 'OPEN')
 		except:
 			dw_api.update_dataset(set_name, summary = metadata_str, description=summary)
-		with dw.open_remote_file(set_name, emb_name, mode = 'wb') as index:
-			index_df.to_csv(index,index =False, mode = 'wb', sep=",")
+		dw_api.upload_files(set_name, [emb_path])
 
 def query(words, emb_name, set_name = None, case_sensitive = True,download=False, vs_format = None):
 	"""Query a set of word vectors from an indexed embedding.
