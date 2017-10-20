@@ -185,6 +185,8 @@ def _emb_rank():
         FROM ' + info.INDEX_FILE
     results = dw.query(info.INDEXER,query).dataframe
     results = results.nlargest(10, 'score')
+    print results
+    import pdb; pdb.set_trace()
     for ind,row in results.iterrows():
         results.loc[ind, 'embedding_name'] = \
         "[`"+row['embedding_name']+"`]("+ info.BASE_URL + row['dataset_name']+")"
