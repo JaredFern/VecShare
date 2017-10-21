@@ -144,10 +144,10 @@ def refresh(force_update=False):
                             set_name=set_name, case_sensitive=True,vs_format='small')
                     try:
                         score_dict  = sim_benchmark._eval_all(emb_simset)
+                        meta_dict.update(score_dict)
                     except: pass
 
                     print ("Newly Indexed embedding: " + emb_name+ " from dataset " + set_name + ".")
-                    meta_dict.update(score_dict)
                     meta_dict.update({
                                 u'embedding_name': emb_name,
                                 u"dataset_name": set_name,
