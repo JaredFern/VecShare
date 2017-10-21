@@ -137,11 +137,11 @@ def refresh(force_update=False):
                             except: pass
                     if set_size == info.LARGE_EMB_TAG:
                         _appx_count = int(meta_dict['app_num'])
-                        emb_simset = vecshare.extract(emb_name+"_appx0", os.path.join('vecshare','sim_vocab'), \
-                            set_name=(set_name.split("/")[0]+'/'+emb_name+"-appx0").replace("_","-"), case_sensitive=True,vs_format='small')
+                        emb_simset = vecshare.extract(emb_name.lower()+"_appx0", os.path.join('vecshare','sim_vocab'), \
+                            set_name=(set_name.split("/")[0]+'/'+emb_name+"-appx0").replace("_","-").lower(), case_sensitive=True,vs_format='small')
                     if set_size == info.SMALL_EMB_TAG:
                         emb_simset = vecshare.extract(emb_name, '/home/jared/VecShare/vecshare/sim_vocab', \
-                            set_name=set_name, case_sensitive=True,vs_format='small')
+                            set_name=set_name.lower(), case_sensitive=True,vs_format='small')
                     try:
                         score_dict  = sim_benchmark._eval_all(emb_simset)
                         meta_dict.update(score_dict)
