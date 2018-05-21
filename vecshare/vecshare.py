@@ -110,7 +110,7 @@ def format(emb_path,vocab_size=None,dim=None, pca = False, precision=None,sep=",
 		for each in new_emb:
 			write.writerow(each)
 
-def upload(set_name, emb_path, metadata = {}, summary = ""):
+def upload(set_name, emb_path, metadata = {}, summary = "", sep = ","):
 	'''Upload a new embedding or update files and associated metadata.
 
 	Args:
