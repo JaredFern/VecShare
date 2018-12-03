@@ -6,9 +6,12 @@ def _eval_all(emb_simset):
     inp_emb = {}
     for wordvec in emb_simset.iterrows():
         word, vec = wordvec[1][0], wordvec[1][1:].tolist()
-        vec = np.fromiter(map(float, vec[1:]), dtype = np.float32)
-        norm = np.linalg.norm(vec)
-        inp_emb[word] = vec/norm if (norm != 0) else [vec]
+        try:
+            vec = np.fromiter(map(float, vec[1:]), dtype = np.float32)
+            norm = np.linalg.norm(vec)
+            inp_emb[word] = vec/norm if (norm != 0) else [vec]
+        except:
+            pass
     score_dict = {}
     score_dict['score'] = 0
     for root,dirs,files in os.walk('/home/jared/vecshare/Test_Input'):
@@ -45,6 +48,9 @@ def _eval_sim(testfile,inp_emb):
             temp_test, temp_emb = np.empty(0), np.empty(0)
             randvec1 = random.choice(inp_emb.values())
             randvec2 = random.choice(inp_emb.values())
+            while len(randvec1) != len(randvec2):
+                randvec1 = random.choice(inp_emb.values())
+                randvec2 = random.choice(inp_emb.values())
             if np.any(randvec1) and np.any(randvec2):
                 embdrop = np.append(embdrop, np.dot(randvec1, randvec2))
             else:
